@@ -4,6 +4,13 @@ require 'config.php';
 require_role('collector');
 
 header('Content-Type: application/json');
+$collectorUsername = $_SESSION['username'] ?? null;
+if (!is_string($collectorUsername) || $collectorUsername === '') {
+    http_response_code(401);
+    echo json_encode(['error' => 'Your session is missing an account identity. Please log in again.']);
+    exit;
+}
+
 $payload = json_decode(file_get_contents('php://input'), true);
 $latitude = $payload['latitude'] ?? null;
 $longitude = $payload['longitude'] ?? null;
@@ -22,7 +29,7 @@ $statement = $pdo->prepare(
      VALUES (:collector_username, :latitude, :longitude, :accuracy, UTC_TIMESTAMP())'
 );
 $statement->execute([
-    ':collector_username' => getenv('COLLECTOR_USERNAME') ?: 'collector',
+    ':collector_username' => $collectorUsername,
     ':latitude' => (float) $latitude,
     ':longitude' => (float) $longitude,
     ':accuracy' => $accuracy === null ? null : (float) $accuracy

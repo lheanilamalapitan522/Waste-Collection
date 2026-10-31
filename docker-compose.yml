@@ -13,6 +13,8 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       COLLECTOR_USERNAME: ${COLLECTOR_USERNAME:-collector}
       COLLECTOR_PASSWORD: ${COLLECTOR_PASSWORD:-}
+      DEVELOPER_USERNAME: ${DEVELOPER_USERNAME:-}
+      DEVELOPER_PASSWORD: ${DEVELOPER_PASSWORD:-}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-0}
     depends_on:
       db:
@@ -33,6 +35,18 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    ports:
+      - "127.0.0.1:8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   mysql_data:

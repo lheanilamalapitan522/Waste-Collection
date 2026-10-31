@@ -18,6 +18,11 @@ function is_collector(): bool
     return current_role() === 'collector';
 }
 
+function is_developer(): bool
+{
+    return current_role() === 'developer';
+}
+
 function require_role(string $role): void
 {
     if (current_role() !== $role) {

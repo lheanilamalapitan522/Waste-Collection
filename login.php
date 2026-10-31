@@ -2,34 +2,75 @@
 require_once 'auth.php';
 require 'config.php';
 
-$adminUsername = getenv('ADMIN_USERNAME');
-$adminPassword = getenv('ADMIN_PASSWORD');
-$collectorUsername = getenv('COLLECTOR_USERNAME');
-$collectorPassword = getenv('COLLECTOR_PASSWORD');
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'] ?? '';
-    $password = $_POST['password'] ?? '';
-    $role = $_POST['role'] ?? '';
-    $validCredentials = false;
+    $username = trim((string) ($_POST['username'] ?? ''));
+    $password = (string) ($_POST['password'] ?? '');
+    $account = null;
 
-    if (is_string($username) && is_string($password) && $role === 'admin' &&
-        is_string($adminUsername) && $adminUsername !== '' &&
-        is_string($adminPassword) && $adminPassword !== '') {
-        $validCredentials = hash_equals($adminUsername, $username) &&
-            hash_equals($adminPassword, $password);
-    } elseif (is_string($username) && is_string($password) && $role === 'collector' &&
-        is_string($collectorUsername) && $collectorUsername !== '' &&
-        is_string($collectorPassword) && $collectorPassword !== '') {
-        $validCredentials = hash_equals($collectorUsername, $username) &&
-            hash_equals($collectorPassword, $password);
+    if ($username !== '' && $password !== '') {
+        $statement = $pdo->prepare(
+            'SELECT username, password_hash, role FROM users
+             WHERE username = :username AND status = "active" LIMIT 1'
+        );
+        $statement->execute([':username' => $username]);
+        $account = $statement->fetch();
+
+        if (!$account) {
+            $configuredAccounts = [
+                [
+                    'username' => getenv('ADMIN_USERNAME'),
+                    'password' => getenv('ADMIN_PASSWORD'),
+                    'role' => 'admin'
+                ],
+                [
+                    'username' => getenv('COLLECTOR_USERNAME'),
+                    'password' => getenv('COLLECTOR_PASSWORD'),
+                    'role' => 'collector'
+                ],
+                [
+                    'username' => getenv('DEVELOPER_USERNAME'),
+                    'password' => getenv('DEVELOPER_PASSWORD'),
+                    'role' => 'developer'
+                ]
+            ];
+
+            foreach ($configuredAccounts as $configuredAccount) {
+                if (is_string($configuredAccount['username']) &&
+                    is_string($configuredAccount['password']) &&
+                    $configuredAccount['username'] !== '' &&
+                    $configuredAccount['password'] !== '' &&
+                    hash_equals($configuredAccount['username'], $username) &&
+                    hash_equals($configuredAccount['password'], $password)) {
+                    $account = $configuredAccount;
+                    $insert = $pdo->prepare(
+                        'INSERT INTO users (username, password_hash, role)
+                         VALUES (:username, :password_hash, :role)
+                         ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), role = VALUES(role), status = "active"'
+                    );
+                    $insert->execute([
+                        ':username' => $username,
+                        ':password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                        ':role' => $configuredAccount['role']
+                    ]);
+                    $account['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
+                    break;
+                }
+            }
+        }
     }
 
-    if ($validCredentials) {
+    if ($account && password_verify($password, $account['password_hash'] ?? '') &&
+        in_array($account['role'], ['admin', 'collector', 'developer'], true)) {
         session_regenerate_id(true);
-        $_SESSION['role'] = $role;
-        $_SESSION['admin_logged_in'] = $role === 'admin';
-        header('Location: ' . ($role === 'admin' ? 'admin.php' : 'collector.php'));
+        $_SESSION['username'] = $account['username'];
+        $_SESSION['role'] = $account['role'];
+        $_SESSION['admin_logged_in'] = $account['role'] === 'admin';
+        $destination = match ($account['role']) {
+            'admin' => 'admin.php',
+            'collector' => 'collector.php',
+            'developer' => 'developer.php'
+        };
+        header('Location: ' . $destination);
         exit;
     } else {
         $error = "Invalid username or password";
@@ -58,14 +99,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
         
         <form method="POST" action="login.php">
-            <div class="form-group">
-                <label for="role">Access type</label>
-                <select id="role" name="role" required>
-                    <option value="">Select access type</option>
-                    <option value="collector">Garbage collector</option>
-                    <option value="admin">Administrator</option>
-                </select>
-            </div>
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required>

@@ -170,6 +170,104 @@ a {
     margin-top: 28px;
 }
 
+.truck-overview {
+    background: #174d2a;
+    border-radius: 16px;
+    color: white;
+    margin-top: 28px;
+    padding: 32px;
+}
+
+.truck-overview-heading {
+    align-items: end;
+    display: flex;
+    gap: 25px;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.truck-overview-heading h2 {
+    font-size: 1.65rem;
+    margin-right: auto;
+}
+
+.truck-overview-heading .eyebrow {
+    color: #9ce0ad;
+    margin-bottom: 0;
+}
+
+.truck-overview-heading > p:last-child {
+    color: #c4dfca;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.truck-overview-grid {
+    display: grid;
+    gap: 1px;
+    grid-template-columns: repeat(4, 1fr);
+    overflow: hidden;
+}
+
+.truck-overview-card {
+    align-items: flex-start;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    display: flex;
+    gap: 14px;
+    min-height: 112px;
+    padding: 22px 18px;
+}
+
+.truck-overview-card:first-child {
+    border-radius: 10px 0 0 10px;
+}
+
+.truck-overview-card:last-child {
+    border-radius: 0 10px 10px 0;
+}
+
+.truck-card-icon {
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
+.truck-card-label {
+    color: #a9d8b3;
+    display: block;
+    font-size: 0.68rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    margin-bottom: 7px;
+}
+
+.truck-overview-card strong {
+    display: block;
+    font-size: 0.98rem;
+}
+
+.truck-overview-card small {
+    color: #c4dfca;
+    display: block;
+    font-size: 0.78rem;
+    margin-top: 6px;
+}
+
+.truck-status .live-dot {
+    background: #7ee58f;
+    box-shadow: none;
+    margin-right: 5px;
+}
+
+.truck-card-action {
+    background: #0a7536;
+    transition: background 0.2s;
+}
+
+.truck-card-action:hover {
+    background: #098544;
+}
+
 .landing-section {
     padding: 70px 0 55px;
 }
@@ -780,6 +878,32 @@ tr:nth-child(even) {
         grid-template-columns: 1fr;
         padding: 40px 25px;
         text-align: center;
+    }
+    .truck-overview {
+        padding: 25px;
+    }
+    .truck-overview-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .truck-overview-heading h2 {
+        margin-right: 0;
+    }
+    .truck-overview-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .truck-overview-card:first-child {
+        border-radius: 10px 0 0 0;
+    }
+    .truck-overview-card:nth-child(2) {
+        border-radius: 0 10px 0 0;
+    }
+    .truck-overview-card:nth-child(3) {
+        border-radius: 0 0 0 10px;
+    }
+    .truck-overview-card:last-child {
+        border-radius: 0 0 10px 0;
     }
     .hero-description {
         margin: 0 auto;

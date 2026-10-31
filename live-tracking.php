@@ -284,8 +284,12 @@ function fetchLatestLocation() {
         .then(function(location) {
             if (!location.latitude || !location.longitude) return;
             hasLiveLocation = true;
-            truckMarker.setLatLng([location.latitude, location.longitude]);
-            document.getElementById('current-location').textContent = 'Latest shared location';
+            if (truckMarker) {
+                truckMarker.setLatLng([location.latitude, location.longitude]);
+            }
+            document.getElementById('current-location').textContent =
+                Number(location.latitude).toFixed(5) + ', ' +
+                Number(location.longitude).toFixed(5);
             document.getElementById('last-update').textContent = location.recorded_at;
         })
         .catch(function() {
@@ -323,6 +327,13 @@ function toggleAnimation() {
     const btn = document.getElementById('toggleBtn');
     btn.textContent = isPaused ? '▶ Resume' : '⏸ Pause';
     btn.classList.toggle('paused', isPaused);
+}
+
+if (!isCollector) {
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchLatestLocation();
+        window.setInterval(fetchLatestLocation, 10000);
+    });
 }
 </script>
 

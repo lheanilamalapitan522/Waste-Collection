@@ -61,6 +61,7 @@ $total_schedule = $pdo->query("SELECT COUNT(*) FROM schedule")->fetchColumn();
             <a href="route.php" class="add-btn" style="display: inline-flex; text-decoration: none;">📍 Manage Routes</a>
             <a href="schedule.php" class="add-btn" style="display: inline-flex; text-decoration: none;">📅 Manage Schedule</a>
             <a href="live-tracking.php" class="add-btn" style="display: inline-flex; text-decoration: none;">🗺 Live Tracking</a>
+            <a href="users.php" class="add-btn" style="display: inline-flex; text-decoration: none;">👥 Manage Users</a>
             <a href="about.php" class="add-btn" style="display: inline-flex; text-decoration: none;">ℹ About Page</a>
         </div>
     </div>

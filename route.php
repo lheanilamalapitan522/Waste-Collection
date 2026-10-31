@@ -54,6 +54,26 @@ $canManage = is_admin();
             font-size: 0.85rem;
             line-height: 1.6;
         }
+
+        .route-sidebar-card {
+            position: static;
+            min-width: 0;
+            margin-bottom: 15px;
+        }
+
+        .route-sidebar-card .truck-status-card {
+            position: static;
+            min-width: 0;
+            padding: 0;
+            box-shadow: none;
+        }
+
+        .route-sidebar-card .truck-marker-info {
+            position: static;
+            margin: 14px 0 0;
+            padding: 0;
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
@@ -76,26 +96,11 @@ $canManage = is_admin();
         <div class="main-col">
             <div class="map-section">
                 <div class="map-header">
-                    <div class="map-title">🗺️ Live Vehicle Location</div>
+                    <div class="map-title">🗺️ Road Route via Populated Collection Points</div>
                     <div class="live-indicator"><span class="live-dot"></span> LIVE</div>
                 </div>
                 
                 <div id="routes-map"></div>
-
-                <div class="truck-status-card">
-                    <h4>🚛 Truck 01 — Route 1</h4>
-                    <p><strong>Current:</strong> Brgy. San Isidro</p>
-                    <p><strong>Next:</strong> Brgy. Poblacion</p>
-                    <p><strong>ETA:</strong> ~15 minutes</p>
-                    <span class="status-tag">● In Service</span>
-                </div>
-
-                <div class="truck-marker-info">
-                    <p><span style="font-size:18px;">🚛</span> Your Vehicle</p>
-                    <p><span style="color:#009933; font-weight:bold;">●</span> Route Start</p>
-                    <p><span style="color:#f59e0b; font-weight:bold;">●</span> Collection Point</p>
-                    <p><span style="color:#ef4444; font-weight:bold;">●</span> Landfill (End)</p>
-                </div>
             </div>
 
             <div class="section-card">
@@ -259,6 +264,22 @@ $canManage = is_admin();
         </div>
 
         <div class="sidebar">
+            <div class="sidebar-box route-sidebar-card">
+                <div class="truck-status-card">
+                    <h4>🚛 Truck 01 — Route 1</h4>
+                    <p><strong>Current:</strong> Brgy. San Isidro</p>
+                    <p><strong>Next:</strong> Brgy. Poblacion</p>
+                    <p><strong>ETA:</strong> ~15 minutes</p>
+                    <span class="status-tag">● In Service</span>
+                </div>
+
+                <div class="truck-marker-info">
+                    <p><span style="font-size:18px;">🚛</span> Your Vehicle</p>
+                    <p><span style="color:#009933; font-weight:bold;">●</span> Route Start</p>
+                    <p><span style="color:#f59e0b; font-weight:bold;">●</span> Collection Point</p>
+                    <p><span style="color:#ef4444; font-weight:bold;">●</span> Landfill (End)</p>
+                </div>
+            </div>
             <div class="sidebar-box box-schedule">
                 <strong>📅 Schedule Reminder</strong>
                 Keep your collection schedule up to date for a smoother and more efficient waste management system.
@@ -273,9 +294,9 @@ $canManage = is_admin();
 
 <script>
 const routePoints = [
-    [14.1852, 121.6835], // San Isidro - Start
-    [14.1828, 121.6860], // Collection Point
-    [14.1780, 121.6910]  // Poblacion - End
+    { position: [14.1852, 121.6835], label: 'Route Start', detail: 'Brgy. San Isidro' },
+    { position: [14.1828, 121.6860], label: 'Collection Point', detail: 'Brgy. Pag-asa' },
+    { position: [14.1780, 121.6910], label: 'Landfill (End)', detail: 'Brgy. Poblacion' }
 ];
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -293,13 +314,59 @@ document.addEventListener('DOMContentLoaded', function() {
         iconSize: [28, 28],
         iconAnchor: [14, 14]
     });
-    L.marker(routePoints[0], { icon: truckIcon }).addTo(map).bindPopup('🚛 Truck 01 — On Route');
+    L.marker(routePoints[0].position, { icon: truckIcon })
+        .addTo(map)
+        .bindPopup('🚛 Truck 01 — On Route');
 
-    L.circleMarker(routePoints[0], { color: '#009933', radius: 8, fillOpacity: 1 }).addTo(map);
-    L.circleMarker(routePoints[1], { color: '#f59e0b', radius: 8, fillOpacity: 1 }).addTo(map);
-    L.circleMarker(routePoints[2], { color: '#ef4444', radius: 8, fillOpacity: 1 }).addTo(map);
+    const pointStyles = [
+        { color: '#009933', fillColor: '#22c55e' },
+        { color: '#f59e0b', fillColor: '#f59e0b' },
+        { color: '#ef4444', fillColor: '#ef4444' }
+    ];
 
-    L.polyline(routePoints, { color: '#3b82f6', weight: 4, opacity: 0.7 }).addTo(map);
+    routePoints.forEach((point, index) => {
+        L.circleMarker(point.position, {
+            color: pointStyles[index].color,
+            fillColor: pointStyles[index].fillColor,
+            radius: 8,
+            fillOpacity: 1
+        }).addTo(map).bindPopup(
+            '<strong>' + point.label + '</strong><br>' + point.detail
+        );
+    });
+
+    const routeLine = L.polyline([], {
+        color: '#3b82f6',
+        weight: 5,
+        opacity: 0.85
+    }).addTo(map);
+    routeLine.setLatLngs(routePoints.map(point => point.position));
+
+    const coordinates = routePoints
+        .map(point => point.position[1] + ',' + point.position[0])
+        .join(';');
+
+    fetch('https://router.project-osrm.org/route/v1/driving/' + coordinates +
+        '?overview=full&geometries=geojson&steps=false')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Road route request failed');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!data.routes || !data.routes[0] || !data.routes[0].geometry) {
+                throw new Error('Road route was not returned');
+            }
+
+            routeLine.setLatLngs(
+                data.routes[0].geometry.coordinates.map(point => [point[1], point[0]])
+            );
+        })
+        .catch(error => {
+            console.error(error);
+            routeLine.setLatLngs(routePoints.map(point => point.position));
+        });
 });
 </script>
 

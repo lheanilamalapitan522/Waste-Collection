@@ -34,6 +34,48 @@ require 'config.php';
         </div>
     </section>
 
+    <section class="truck-overview">
+        <div class="truck-overview-heading">
+            <p class="eyebrow">WASTE COLLECTION TRUCK</p>
+            <h2>Truck 01 service overview</h2>
+            <p>Follow the collection truck and prepare your waste before it arrives.</p>
+        </div>
+        <div class="truck-overview-grid">
+            <div class="truck-overview-card truck-status">
+                <span class="truck-card-icon">🚛</span>
+                <div>
+                    <span class="truck-card-label">CURRENT STATUS</span>
+                    <strong><span class="live-dot"></span> On route</strong>
+                    <small>Collection is active today</small>
+                </div>
+            </div>
+            <div class="truck-overview-card">
+                <span class="truck-card-icon">📍</span>
+                <div>
+                    <span class="truck-card-label">CURRENT AREA</span>
+                    <strong>Brgy. San Isidro</strong>
+                    <small>Next stop: Brgy. Poblacion</small>
+                </div>
+            </div>
+            <div class="truck-overview-card">
+                <span class="truck-card-icon">📅</span>
+                <div>
+                    <span class="truck-card-label">TODAY'S SCHEDULE</span>
+                    <strong>8:00 AM - 11:00 AM</strong>
+                    <small>Route 1 collection window</small>
+                </div>
+            </div>
+            <a href="live-tracking.php" class="truck-overview-card truck-card-action">
+                <span class="truck-card-icon">🗺</span>
+                <div>
+                    <span class="truck-card-label">TRACK THE TRUCK</span>
+                    <strong>Open live map</strong>
+                    <small>View the latest location →</small>
+                </div>
+            </a>
+        </div>
+    </section>
+
     <section class="landing-section">
         <div class="section-heading">
             <p class="eyebrow">HOW WE CAN HELP</p>

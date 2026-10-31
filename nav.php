@@ -18,6 +18,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
         <?php elseif (is_collector()): ?>
             <a href="collector.php" <?php echo $current_page == 'collector.php' ? 'class="active"' : ''; ?>>🚛 Collector</a>
             <a href="logout.php" class="login-btn">🚪 Logout</a>
+        <?php elseif (is_developer()): ?>
+            <a href="developer.php" <?php echo $current_page == 'developer.php' ? 'class="active"' : ''; ?>>🛠 Developer</a>
+            <a href="logout.php" class="login-btn">🚪 Logout</a>
         <?php else: ?>
             <a href="login.php" class="login-btn">🔑 Login</a>
         <?php endif; ?>

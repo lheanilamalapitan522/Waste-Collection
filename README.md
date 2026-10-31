@@ -16,10 +16,13 @@ operational tools for authorized municipal personnel in Mauban, Quezon.
   collection operation, and view their assigned route.
 - **Administrators:** Sign in securely, manage drivers and vehicles, maintain
   routes and schedules, and monitor active collection vehicles.
+- **Developers:** Sign in securely to access the maintenance dashboard and
+  system update tools without receiving administrator or collector permissions.
 
 The public homepage is the default entry point. Residents can browse public
-schedule, route, and tracking information without signing in. The Login page
-is reserved for the Administrator and Garbage Collector access types.
+schedule, route, and tracking information without signing in. The Login page accepts only a username and password. An administrator creates
+each account and assigns its role; the assigned role is stored in the database
+and determines which protected pages and actions the account can access.
 
 The collector location-sharing page requires browser location permission and
 HTTPS in production. `http://localhost:8080` is permitted for local testing.
@@ -94,7 +97,7 @@ HTTPS in production. `http://localhost:8080` is permitted for local testing.
 
 ### Docker
 
-1. Copy `.env.example` to `.env` and set the database and admin credentials.
+1. Copy `.env.example` to `.env` and set the database and account credentials.
 2. Start the application:
 
    ```sh
@@ -102,10 +105,29 @@ HTTPS in production. `http://localhost:8080` is permitted for local testing.
    ```
 
 3. Open `http://localhost:8080`. The Docker port is bound to localhost only.
+4. Open `http://localhost:8081` to open phpMyAdmin.
+
+In phpMyAdmin, log in with the MySQL application credentials from `.env`:
+
+```text
+Server: db
+Username: value of MYSQL_USER
+Password: value of MYSQL_PASSWORD
+Database: mauban_waste_collection
+```
 
 The first database startup loads [schema.sql](./schema.sql). If the database
 volume was created before the schema was added, run
 `docker compose down -v` once and then start the services again.
+
+The schema creates the foundation tables for users, developer maintenance
+tasks, routes, route points, vehicles, drivers, schedules, and GPS locations.
+It also inserts development records for the three sample routes and two sample vehicles. These seed
+records are safe to re-run because they use idempotent inserts.
+
+For an existing database volume, apply the `developer_maintenance_tasks`
+`CREATE TABLE` statement from `schema.sql` once; Docker only runs the schema
+automatically when it initializes a new database volume.
 
 Stop the containers with `docker compose down`. Add `-v` when stopping if you
 also want to remove the persisted MySQL data.
@@ -119,12 +141,17 @@ plain HTTP.
 1. Place the project in your PHP web server's document root.
 2. Create the `mauban_waste_collection` MySQL database and configure the
    connection settings in `config.php`.
-3. Configure the `ADMIN_USERNAME` and `ADMIN_PASSWORD` environment variables
-   for the PHP web server. For Apache, set them in the appropriate virtual
-   host or server configuration, then restart Apache. Use a unique, strong
-   password and do not commit credentials.
+3. Configure `ADMIN_USERNAME` and `ADMIN_PASSWORD` for the PHP web server.
+   Optionally set `DEVELOPER_USERNAME` and `DEVELOPER_PASSWORD` to bootstrap a
+   developer account the same way. For Apache, set these in the appropriate
+   virtual host or server configuration, then restart Apache. Use unique,
+   strong passwords and do not commit credentials.
 4. Open the project through the local web server.
 
-The admin login is disabled until both environment variables are set.
-Collector access is disabled until `COLLECTOR_USERNAME` and
-`COLLECTOR_PASSWORD` are set.
+The environment credentials bootstrap the configured admin, collector, or
+developer account on its first successful login. After that, accounts should
+be created and managed from the Admin Manage Users page; users cannot select or
+change their role on the login form. Developer accounts open the protected
+Developer Maintenance dashboard, where they can start tasks, record system
+updates, and mark work complete. Maintenance history is stored in
+`developer_maintenance_tasks`.
