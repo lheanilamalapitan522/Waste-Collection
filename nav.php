@@ -1,9 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once 'auth.php';
 $current_page = basename($_SERVER['PHP_SELF']);
-$is_admin = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true;
 ?>
 <nav class="navbar">
     <div class="nav-brand">♻ <?php echo SITE_NAME; ?></div>
@@ -15,8 +12,11 @@ $is_admin = isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] 
         <a href="monthly-schedule.php" <?php echo $current_page == 'monthly-schedule.php' ? 'class="active"' : ''; ?>>Monthly</a>
         <a href="about.php" <?php echo $current_page == 'about.php' ? 'class="active"' : ''; ?>>About</a>
         
-        <?php if ($is_admin): ?>
+        <?php if (is_admin()): ?>
             <a href="admin.php" <?php echo $current_page == 'admin.php' ? 'class="active"' : ''; ?>>⚙ Admin</a>
+            <a href="logout.php" class="login-btn">🚪 Logout</a>
+        <?php elseif (is_collector()): ?>
+            <a href="collector.php" <?php echo $current_page == 'collector.php' ? 'class="active"' : ''; ?>>🚛 Collector</a>
             <a href="logout.php" class="login-btn">🚪 Logout</a>
         <?php else: ?>
             <a href="login.php" class="login-btn">🔑 Login</a>

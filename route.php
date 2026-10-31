@@ -1,8 +1,7 @@
 <?php
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_strict_mode', 1);
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once 'auth.php';
 require 'config.php';
+$canManage = is_admin();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -11,8 +10,8 @@ require 'config.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Routes — <?php echo SITE_NAME; ?></title>
     
-    <link rel="stylesheet" href="dist/leaflet.css" />
-    <script src="dist/leaflet.js"></script>
+    <link rel="stylesheet" href="leaflet.css" />
+    <script src="leaflet.js"></script>
     <link rel="stylesheet" href="style.css">
     
     <style>
@@ -66,9 +65,11 @@ require 'config.php';
     <div class="page-header">
         <div class="page-title-section">
             <h1>📍 ROUTES & LIVE TRACKING</h1>
-            <p>Manage collection routes & monitor vehicle locations</p>
+            <p><?php echo $canManage ? 'Manage collection routes & monitor vehicle locations' : 'View collection routes and vehicle locations'; ?></p>
         </div>
-        <button class="add-btn">➕ Add Route</button>
+        <?php if ($canManage): ?>
+            <button class="add-btn">➕ Add Route</button>
+        <?php endif; ?>
     </div>
 
     <div class="content-grid">
@@ -108,7 +109,7 @@ require 'config.php';
                             <th>ROUTE NAME</th>
                             <th>AREA/BARANGAY</th>
                             <th>STATUS</th>
-                            <th>ACTION</th>
+                            <?php if ($canManage): ?><th>ACTION</th><?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -117,30 +118,30 @@ require 'config.php';
                             <td>ROUTE 1</td>
                             <td>BRGY. SAN ISIDRO</td>
                             <td><span class="status-badge status-active">active</span></td>
-                            <td class="action-icons">
+                            <?php if ($canManage): ?><td class="action-icons">
                                 <span class="edit-icon">✏️ Edit</span>
                                 <span class="delete-icon">🗑️ Delete</span>
-                            </td>
+                            </td><?php endif; ?>
                         </tr>
                         <tr>
                             <td>R002</td>
                             <td>ROUTE 2</td>
                             <td>BRGY. BAGONG BAYAN</td>
                             <td><span class="status-badge status-active">active</span></td>
-                            <td class="action-icons">
+                            <?php if ($canManage): ?><td class="action-icons">
                                 <span class="edit-icon">✏️ Edit</span>
                                 <span class="delete-icon">🗑️ Delete</span>
-                            </td>
+                            </td><?php endif; ?>
                         </tr>
                         <tr>
                             <td>R003</td>
                             <td>ROUTE 3</td>
                             <td>BRGY. POBLACION</td>
                             <td><span class="status-badge status-inactive">inactive</span></td>
-                            <td class="action-icons">
+                            <?php if ($canManage): ?><td class="action-icons">
                                 <span class="edit-icon">✏️ Edit</span>
                                 <span class="delete-icon">🗑️ Delete</span>
-                            </td>
+                            </td><?php endif; ?>
                         </tr>
                     </tbody>
                 </table>
@@ -149,7 +150,7 @@ require 'config.php';
             <div class="section-card">
                 <div class="section-top">
                     <div class="section-title">📅 UPDATE SCHEDULE <span class="section-subtitle">Set and update collection schedule</span></div>
-                    <button class="add-btn">➕ Add Schedule</button>
+                    <?php if ($canManage): ?><button class="add-btn">➕ Add Schedule</button><?php endif; ?>
                 </div>
                 <table>
                     <thead>
@@ -159,7 +160,7 @@ require 'config.php';
                             <th>DAY</th>
                             <th>TIME</th>
                             <th>STATUS</th>
-                            <th>ACTION</th>
+                            <?php if ($canManage): ?><th>ACTION</th><?php endif; ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -169,10 +170,10 @@ require 'config.php';
                             <td>MON-WED-FRI</td>
                             <td>8:00AM-11:00AM</td>
                             <td><span class="status-badge status-active">active</span></td>
-                            <td class="action-icons">
+                            <?php if ($canManage): ?><td class="action-icons">
                                 <span class="edit-icon">✏️ Edit</span>
                                 <span class="delete-icon">🗑️ Delete</span>
-                            </td>
+                            </td><?php endif; ?>
                         </tr>
                         <tr>
                             <td>S002</td>
@@ -180,10 +181,10 @@ require 'config.php';
                             <td>TUES-THURS-SATURDAY</td>
                             <td>9:00AM-12:00PM</td>
                             <td><span class="status-badge status-active">active</span></td>
-                            <td class="action-icons">
+                            <?php if ($canManage): ?><td class="action-icons">
                                 <span class="edit-icon">✏️ Edit</span>
                                 <span class="delete-icon">🗑️ Delete</span>
-                            </td>
+                            </td><?php endif; ?>
                         </tr>
                         <tr>
                             <td>S003</td>
@@ -191,15 +192,16 @@ require 'config.php';
                             <td>MON-WED-FRI</td>
                             <td>1:00PM-4:00PM</td>
                             <td><span class="status-badge status-inactive">inactive</span></td>
-                            <td class="action-icons">
+                            <?php if ($canManage): ?><td class="action-icons">
                                 <span class="edit-icon">✏️ Edit</span>
                                 <span class="delete-icon">🗑️ Delete</span>
-                            </td>
+                            </td><?php endif; ?>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
+            <?php if ($canManage): ?>
             <div class="section-card">
                 <div class="section-top">
                     <div class="section-title">👥 MANAGE AUTHORIZED DRIVERS</div>
@@ -253,6 +255,7 @@ require 'config.php';
                     </tbody>
                 </table>
             </div>
+            <?php endif; ?>
         </div>
 
         <div class="sidebar">

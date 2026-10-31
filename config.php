@@ -5,10 +5,10 @@ define('SITE_DESC', 'Official Waste Management System of Mauban, Quezon');
 define('BASE_URL', '');
 
 // Database Connection Settings
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'mauban_waste_collection');
-define('DB_USER', 'root');
-define('DB_PASS', ''); // Leave empty for XAMPP/WAMP
+define('DB_HOST', getenv('DB_HOST') ?: 'localhost');
+define('DB_NAME', getenv('DB_NAME') ?: 'mauban_waste_collection');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') ?: '');
 
 // Connect to Database
 try {

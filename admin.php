@@ -1,13 +1,8 @@
 <?php
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_strict_mode', 1);
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once 'auth.php';
 require 'config.php';
 
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
-    header('Location: login.php');
-    exit;
-}
+require_role('admin');
 
 // Get real counts from database
 $total_routes = $pdo->query("SELECT COUNT(*) FROM routes")->fetchColumn();

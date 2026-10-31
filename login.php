@@ -1,25 +1,35 @@
 <?php
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_strict_mode', 1);
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once 'auth.php';
 require 'config.php';
 
 $adminUsername = getenv('ADMIN_USERNAME');
 $adminPassword = getenv('ADMIN_PASSWORD');
+$collectorUsername = getenv('COLLECTOR_USERNAME');
+$collectorPassword = getenv('COLLECTOR_PASSWORD');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
-    
-    if (
-        $adminUsername !== false && $adminUsername !== '' &&
-        $adminPassword !== false && $adminPassword !== '' &&
-        is_string($username) && is_string($password) &&
-        hash_equals($adminUsername, $username) &&
-        hash_equals($adminPassword, $password)
-    ) {
-        $_SESSION['admin_logged_in'] = true;
-        header('Location: admin.php');
+    $role = $_POST['role'] ?? '';
+    $validCredentials = false;
+
+    if (is_string($username) && is_string($password) && $role === 'admin' &&
+        is_string($adminUsername) && $adminUsername !== '' &&
+        is_string($adminPassword) && $adminPassword !== '') {
+        $validCredentials = hash_equals($adminUsername, $username) &&
+            hash_equals($adminPassword, $password);
+    } elseif (is_string($username) && is_string($password) && $role === 'collector' &&
+        is_string($collectorUsername) && $collectorUsername !== '' &&
+        is_string($collectorPassword) && $collectorPassword !== '') {
+        $validCredentials = hash_equals($collectorUsername, $username) &&
+            hash_equals($collectorPassword, $password);
+    }
+
+    if ($validCredentials) {
+        session_regenerate_id(true);
+        $_SESSION['role'] = $role;
+        $_SESSION['admin_logged_in'] = $role === 'admin';
+        header('Location: ' . ($role === 'admin' ? 'admin.php' : 'collector.php'));
         exit;
     } else {
         $error = "Invalid username or password";
@@ -41,13 +51,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <a href="index.php" class="back-link">← Back to Home</a>
     
     <div class="page-card">
-        <h2 style="text-align: center;">🔑 Admin Login</h2>
+        <h2 style="text-align: center;">🔑 Authorized Login</h2>
         
         <?php if (isset($error)): ?>
             <p style="color: red; text-align: center;"><?php echo $error; ?></p>
         <?php endif; ?>
         
         <form method="POST" action="login.php">
+            <div class="form-group">
+                <label for="role">Access type</label>
+                <select id="role" name="role" required>
+                    <option value="">Select access type</option>
+                    <option value="collector">Garbage collector</option>
+                    <option value="admin">Administrator</option>
+                </select>
+            </div>
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required>

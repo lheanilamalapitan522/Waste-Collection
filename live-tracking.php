@@ -1,8 +1,7 @@
 <?php
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_strict_mode', 1);
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once 'auth.php';
 require 'config.php';
+$isCollector = is_collector();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -10,9 +9,6 @@ require 'config.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Tracking — <?php echo SITE_NAME; ?></title>
-    
-    <link rel="stylesheet" href="dist/leaflet.css" />
-    <script src="dist/leaflet.js"></script>
     
     <link rel="stylesheet" href="style.css">
     
@@ -26,6 +22,7 @@ require 'config.php';
             border-radius: 8px;
             position: relative;
             z-index: 1;
+            border: 0;
         }
         
         .tracking-container {
@@ -150,7 +147,12 @@ require 'config.php';
     </div>
 
     <div class="tracking-container">
-        <div id="tracking-map"></div>
+        <iframe
+            id="tracking-map"
+            title="Live truck tracking map in Mauban, Quezon"
+            src="https://www.google.com/maps?q=Mauban%2C+Quezon%2C+Philippines&output=embed"
+            loading="lazy"
+            allowfullscreen></iframe>
         
         <div class="truck-info-panel">
             <h3><span class="live-pulse"></span> Truck 01 — On Route</h3>
@@ -161,16 +163,6 @@ require 'config.php';
             <div class="info-row"><span>📅 Last Update:</span><span id="last-update">Just now</span></div>
         </div>
 
-        <div class="controls-panel">
-            <button id="toggleBtn">⏸ Pause</button>
-            <button id="centerBtn">🎯 Center</button>
-        </div>
-
-        <div class="route-legend">
-            <div class="legend-item"><span class="dot dot-start"></span> Start Point</div>
-            <div class="legend-item"><span class="dot dot-route"></span> Route Path</div>
-            <div class="legend-item"><span class="dot dot-end"></span> Destination</div>
-        </div>
     </div>
 </div>
 
@@ -186,9 +178,14 @@ let map, truckMarker;
 let currentPointIndex = 0;
 let segmentProgress = 0;
 let isPaused = false;
+let hasLiveLocation = false;
+const isCollector = <?php echo $isCollector ? 'true' : 'false'; ?>;
 
 document.addEventListener('DOMContentLoaded', function() {
-    initMap();
+    const mapContainer = document.getElementById('tracking-map');
+    if (window.L && mapContainer && mapContainer.tagName !== 'IFRAME') {
+        initMap();
+    }
 });
 
 function initMap() {
@@ -229,17 +226,76 @@ function initMap() {
         radius: 8, fillColor: '#ef4444', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2
     }).addTo(map);
 
-    startAnimation();
+    if (isCollector) {
+        startLocationSharing();
+    } else {
+        startAnimation();
+        setInterval(fetchLatestLocation, 10000);
+        fetchLatestLocation();
+    }
 
-    document.getElementById('toggleBtn').addEventListener('click', toggleAnimation);
+    document.getElementById('toggleBtn').addEventListener('click', isCollector ? toggleLocationSharing : toggleAnimation);
     document.getElementById('centerBtn').addEventListener('click', () => {
         map.panTo(truckMarker.getLatLng());
     });
 }
 
+let watchId = null;
+function startLocationSharing() {
+    if (!navigator.geolocation) {
+        document.getElementById('last-update').textContent = 'GPS unavailable';
+        return;
+    }
+    watchId = navigator.geolocation.watchPosition(function(position) {
+        truckMarker.setLatLng([position.coords.latitude, position.coords.longitude]);
+        document.getElementById('current-location').textContent = 'Current device location';
+        document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+        fetch('location-update.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy
+            })
+        }).catch(function() {
+            document.getElementById('last-update').textContent = 'Update failed';
+        });
+    }, function() {
+        document.getElementById('last-update').textContent = 'GPS permission denied';
+    }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 });
+    document.getElementById('toggleBtn').textContent = '⏹ Stop sharing';
+}
+
+function toggleLocationSharing() {
+    if (watchId === null) {
+        startLocationSharing();
+        return;
+    }
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    document.getElementById('toggleBtn').textContent = '▶ Start sharing';
+    document.getElementById('last-update').textContent = 'Sharing stopped';
+}
+
+function fetchLatestLocation() {
+    fetch('latest-location.php')
+        .then(function(response) { return response.json(); })
+        .then(function(location) {
+            if (!location.latitude || !location.longitude) return;
+            hasLiveLocation = true;
+            truckMarker.setLatLng([location.latitude, location.longitude]);
+            document.getElementById('current-location').textContent = 'Latest shared location';
+            document.getElementById('last-update').textContent = location.recorded_at;
+        })
+        .catch(function() {
+            document.getElementById('last-update').textContent = 'Location unavailable';
+        });
+}
+
 function startAnimation() {
     setInterval(() => {
-        if (isPaused) return;
+        if (isPaused || hasLiveLocation) return;
         segmentProgress += 0.008;
         if (segmentProgress >= 1) {
             segmentProgress = 0;
