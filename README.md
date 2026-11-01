@@ -179,6 +179,7 @@ container.
 
    ```text
    DB_HOST=your-mysql-host
+   DB_PORT=your-mysql-port
    DB_NAME=your-database-name
    DB_USER=your-database-user
    DB_PASS=your-database-password
