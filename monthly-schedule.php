@@ -1,81 +1,37 @@
 <?php
 require_once 'session.php';
 require 'config.php';
+$now = new DateTimeImmutable('now', new DateTimeZone('Asia/Manila'));
+$monthStart = $now->modify('first day of this month')->setTime(0, 0);
+$daysInMonth = (int) $monthStart->format('t');
+$scheduleRows = $pdo->query(
+    "SELECT r.name AS route_name, r.barangay, s.day_name, s.collection_time
+     FROM schedule s JOIN routes r ON r.id = s.route_id
+     WHERE s.status = 'active' AND r.status = 'active'
+     ORDER BY FIELD(s.day_name, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'), r.name"
+)->fetchAll();
+$byWeekday = [];
+foreach ($scheduleRows as $row) $byWeekday[$row['day_name']][] = $row;
 ?>
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monthly Schedule — <?php echo SITE_NAME; ?></title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
+<html lang="en"><head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Schedule — <?php echo htmlspecialchars(SITE_NAME, ENT_QUOTES, 'UTF-8'); ?></title>
+    <?php require 'bootstrap-head.php'; ?><link rel="stylesheet" href="style.css">
+</head><body>
 <?php require 'nav.php'; ?>
-
-<div class="page-wrapper">
+<main class="page-wrapper container-xl">
     <a href="schedule.php" class="back-link">← Back to Weekly Schedule</a>
-    
-    <div class="page-header">
-        <div class="page-title-section">
-            <h1>📆 MONTHLY SCHEDULE</h1>
-            <p>October 2026 Collection Calendar</p>
-        </div>
-    </div>
-
-    <div class="section-card">
-        <h3 style="padding: 15px 18px; border-bottom: 1px solid #eee;">October 2026</h3>
-        <table>
-            <thead>
-                <tr>
-                    <th>WEEK</th>
-                    <th>DATES</th>
-                    <th>ROUTE 1</th>
-                    <th>ROUTE 2</th>
-                    <th>ROUTE 3</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Week 1</td>
-                    <td>Oct 1-4</td>
-                    <td>Mon, Wed, Fri</td>
-                    <td>Tue, Thu</td>
-                    <td>Mon, Wed, Fri</td>
-                </tr>
-                <tr>
-                    <td>Week 2</td>
-                    <td>Oct 6-11</td>
-                    <td>Mon, Wed, Fri</td>
-                    <td>Tue, Thu, Sat</td>
-                    <td>Mon, Wed, Fri</td>
-                </tr>
-                <tr>
-                    <td>Week 3</td>
-                    <td>Oct 13-18</td>
-                    <td>Mon, Wed, Fri</td>
-                    <td>Tue, Thu, Sat</td>
-                    <td>Mon, Wed, Fri</td>
-                </tr>
-                <tr>
-                    <td>Week 4</td>
-                    <td>Oct 20-25</td>
-                    <td>Mon, Wed, Fri</td>
-                    <td>Tue, Thu, Sat</td>
-                    <td>Mon, Wed, Fri</td>
-                </tr>
-                <tr>
-                    <td>Week 5</td>
-                    <td>Oct 27-31</td>
-                    <td>Mon, Wed, Fri</td>
-                    <td>Tue, Thu, Sat</td>
-                    <td>Mon, Wed, Fri</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<script src="script.js"></script>
-</body>
-</html>
+    <header class="page-header"><div class="page-title-section"><h1>Monthly collection calendar</h1><p>Scheduled collections for <?php echo htmlspecialchars($monthStart->format('F Y'), ENT_QUOTES, 'UTF-8'); ?>.</p></div></header>
+    <section class="section-card p-3 p-md-4">
+        <div class="table-responsive"><table class="table table-striped align-middle mb-0">
+            <thead><tr><th>Date</th><th>Day</th><th>Collection route and time</th></tr></thead><tbody>
+            <?php for ($dayNumber = 1; $dayNumber <= $daysInMonth; $dayNumber++): $date = $monthStart->setDate((int) $monthStart->format('Y'), (int) $monthStart->format('m'), $dayNumber); $entries = $byWeekday[$date->format('l')] ?? []; ?>
+            <tr><td><?php echo $date->format('M j'); ?></td><td><?php echo $date->format('l'); ?></td><td>
+                <?php if (!$entries): ?><span class="text-muted">No scheduled collection</span>
+                <?php else: foreach ($entries as $entry): ?><div><strong><?php echo htmlspecialchars($entry['route_name'] . ' · ' . $entry['barangay'], ENT_QUOTES, 'UTF-8'); ?></strong><span class="text-muted"> — <?php echo htmlspecialchars($entry['collection_time'], ENT_QUOTES, 'UTF-8'); ?></span></div><?php endforeach; endif; ?>
+            </td></tr>
+            <?php endfor; ?>
+            </tbody></table></div>
+    </section>
+</main></body></html>

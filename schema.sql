@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NULL,
-    role ENUM('admin', 'collector', 'developer') NOT NULL,
+    role ENUM('admin', 'collector', 'developer', 'resident') NOT NULL,
     status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -36,8 +36,12 @@ CREATE TABLE IF NOT EXISTS drivers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     vehicle_id INT NULL,
+    user_id INT NULL UNIQUE,
+    route_id INT NULL,
     status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
-    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL
+    FOREIGN KEY (vehicle_id) REFERENCES vehicles(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    FOREIGN KEY (route_id) REFERENCES routes(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS route_points (
@@ -79,10 +83,10 @@ INSERT IGNORE INTO vehicles (id, vehicle_number, status) VALUES
     (1, 'Truck 01', 'active'),
     (2, 'Truck 02', 'active');
 
-INSERT IGNORE INTO drivers (id, name, vehicle_id, status) VALUES
-    (1, 'Juan Cruz', 1, 'active'),
-    (2, 'Pedro Santos', 2, 'active'),
-    (3, 'Mark Reyes', NULL, 'inactive');
+INSERT IGNORE INTO drivers (id, name, vehicle_id, route_id, status) VALUES
+    (1, 'Juan Cruz', 1, 1, 'active'),
+    (2, 'Pedro Santos', 2, 2, 'active'),
+    (3, 'Mark Reyes', NULL, NULL, 'inactive');
 
 INSERT IGNORE INTO route_points
     (route_id, point_order, point_name, latitude, longitude) VALUES

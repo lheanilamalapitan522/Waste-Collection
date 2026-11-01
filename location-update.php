@@ -1,6 +1,7 @@
 <?php
 require_once 'auth.php';
 require 'config.php';
+require_once 'tracking.php';
 require_role('collector');
 
 header('Content-Type: application/json');
@@ -11,7 +12,22 @@ if (!is_string($collectorUsername) || $collectorUsername === '') {
     exit;
 }
 
+$duty = collector_duty($pdo, $collectorUsername);
+if ($duty === null) {
+    http_response_code(403);
+    echo json_encode([
+        'error' => 'Location sharing is only available during your assigned active collection schedule.',
+        'code' => 'not_on_duty'
+    ]);
+    exit;
+}
+
 $payload = json_decode(file_get_contents('php://input'), true);
+if (!is_array($payload)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Request body must contain valid JSON location data.']);
+    exit;
+}
 $latitude = $payload['latitude'] ?? null;
 $longitude = $payload['longitude'] ?? null;
 $accuracy = $payload['accuracy'] ?? null;
@@ -35,4 +51,8 @@ $statement->execute([
     ':accuracy' => $accuracy === null ? null : (float) $accuracy
 ]);
 
-echo json_encode(['success' => true]);
+echo json_encode([
+    'success' => true,
+    'route' => $duty['route_name'],
+    'vehicle' => $duty['vehicle_number']
+]);

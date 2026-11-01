@@ -5,6 +5,7 @@ services:
     ports:
       - "127.0.0.1:8080:80"
     environment:
+      APP_ENV: ${APP_ENV:-development}
       DB_HOST: db
       DB_NAME: ${MYSQL_DATABASE:-mauban_waste_collection}
       DB_USER: ${MYSQL_USER:-mauban}
@@ -16,6 +17,8 @@ services:
       DEVELOPER_USERNAME: ${DEVELOPER_USERNAME:-}
       DEVELOPER_PASSWORD: ${DEVELOPER_PASSWORD:-}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-0}
+    volumes:
+      - ./:/var/www/html:ro
     depends_on:
       db:
         condition: service_healthy

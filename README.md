@@ -11,18 +11,21 @@ operational tools for authorized municipal personnel in Mauban, Quezon.
 ### User roles
 
 - **Residents:** View the public landing page, collection schedules, assigned
-  routes, and the current location/status of collection vehicles.
+  routes, and the current location/status of collection vehicles without an
+  account.
 - **Drivers:** Sign in securely, start or stop location sharing during a
   collection operation, and view their assigned route.
 - **Administrators:** Sign in securely, manage drivers and vehicles, maintain
   routes and schedules, and monitor active collection vehicles.
-- **Developers:** Sign in securely to access the maintenance dashboard and
-  system update tools without receiving administrator or collector permissions.
+- **Developers:** Sign in with the separately configured developer account to
+  access the maintenance dashboard and all administrator-protected pages.
 
-The public homepage is the default entry point. Residents can browse public
-schedule, route, and tracking information without signing in. The Login page accepts only a username and password. An administrator creates
-each account and assigns its role; the assigned role is stored in the database
-and determines which protected pages and actions the account can access.
+The public homepage is the default entry point. Residents can browse schedules,
+routes, and tracking information without signing in or creating an account.
+Drivers can register from the Login page. Administrators create administrator
+accounts. The developer account is configured separately with
+`DEVELOPER_USERNAME` and `DEVELOPER_PASSWORD`; developer is not available in
+the registration role list and has administrator-level access.
 
 The collector location-sharing page requires browser location permission and
 HTTPS in production. `http://localhost:8080` is permitted for local testing.
@@ -31,7 +34,7 @@ HTTPS in production. `http://localhost:8080` is permitted for local testing.
 
 1. Provide a public, mobile-responsive website.
 2. Display collection schedules by service area or barangay.
-3. Display assigned collection routes on an interactive map.
+3. Display collection areas in OpenStreetMap embeds and show route stops alongside the map.
 4. Display the latest available GPS position and tracking status of active
    collection vehicles.
 5. Allow authorized drivers to sign in and control tracking for their assigned
@@ -60,7 +63,7 @@ HTTPS in production. `http://localhost:8080` is permitted for local testing.
   separated from presentation code and accessed through validated database
   operations.
 - **Compatibility:** The website must support current desktop and mobile
-  browsers with JavaScript enabled for interactive maps and tracking.
+  browsers with JavaScript enabled for live tracking updates.
 
 ### In scope
 
@@ -70,7 +73,7 @@ HTTPS in production. `http://localhost:8080` is permitted for local testing.
 - GPS-based vehicle location display
 - Driver and administrator authentication
 - Vehicle, route, schedule, and driver management
-- Interactive map display
+- OpenStreetMap embedded map display
 - Black-box functional testing
 - ISO/IEC 25010-based software quality evaluation
 
@@ -97,15 +100,21 @@ HTTPS in production. `http://localhost:8080` is permitted for local testing.
 
 ### Docker
 
-1. Copy `.env.example` to `.env` and set the database and account credentials.
-2. Start the application:
+1. Create a `.env` file in the project root and set `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `ADMIN_USERNAME`, and `ADMIN_PASSWORD`. Set `DEVELOPER_USERNAME` and `DEVELOPER_PASSWORD` to enable developer login. Optional driver bootstrap credentials are `COLLECTOR_USERNAME` and `COLLECTOR_PASSWORD`.
+2. Maps on the home, route, and live-tracking pages use OpenStreetMap embeds and do not require a map API key. Location markers are shown as page overlays while the embedded map recenters on the reported coordinates.
+3. Start the application:
 
    ```sh
    docker compose up --build
    ```
 
-3. Open `http://localhost:8080`. The Docker port is bound to localhost only.
-4. Open `http://localhost:8081` to open phpMyAdmin.
+The app container mounts the project folder read-only and watches PHP, CSS,
+and JavaScript files during development. Save a change and the open page at
+`http://localhost:8080` reloads automatically. Rebuild only when changing the
+Dockerfile or Apache configuration.
+
+4. Open `http://localhost:8080`. The Docker port is bound to localhost only.
+5. Open `http://localhost:8081` to open phpMyAdmin.
 
 In phpMyAdmin, log in with the MySQL application credentials from `.env`:
 
@@ -116,21 +125,23 @@ Password: value of MYSQL_PASSWORD
 Database: mauban_waste_collection
 ```
 
-The first database startup loads [schema.sql](./schema.sql). If the database
-volume was created before the schema was added, run
-`docker compose down -v` once and then start the services again.
+The first database startup loads [schema.sql](./schema.sql). For an existing
+database that predates collector-to-route scheduling, apply
+[migrations/002_assign_collectors_to_routes.sql](./migrations/002_assign_collectors_to_routes.sql)
+once. Then use **Admin → Manage trucks** to link each active driver to a
+collector login and route. The route must have an active schedule for location
+sharing to be accepted and shown on the public map. GPS uploads are accepted
+only during that route's active weekday/time window in the Philippines time
+zone; the public map hides locations older than 60 seconds and hides the marker
+when it cannot verify an active assignment.
 
-The schema creates the foundation tables for users, developer maintenance
-tasks, routes, route points, vehicles, drivers, schedules, and GPS locations.
-It also inserts development records for the three sample routes and two sample vehicles. These seed
+The schema creates the foundation tables for users, routes, route points,
+vehicles, drivers, schedules, and GPS locations. It also inserts development
+records for the three sample routes and two sample vehicles. These seed
 records are safe to re-run because they use idempotent inserts.
 
-For an existing database volume, apply the `developer_maintenance_tasks`
-`CREATE TABLE` statement from `schema.sql` once; Docker only runs the schema
-automatically when it initializes a new database volume.
-
-Stop the containers with `docker compose down`. Add `-v` when stopping if you
-also want to remove the persisted MySQL data.
+Stop the containers with `docker compose down`. This keeps the persisted MySQL
+data.
 
 For production, put the app behind an HTTPS reverse proxy and set
 `SESSION_COOKIE_SECURE=1` in `.env`. Do not expose the container directly over
@@ -141,17 +152,11 @@ plain HTTP.
 1. Place the project in your PHP web server's document root.
 2. Create the `mauban_waste_collection` MySQL database and configure the
    connection settings in `config.php`.
-3. Configure `ADMIN_USERNAME` and `ADMIN_PASSWORD` for the PHP web server.
-   Optionally set `DEVELOPER_USERNAME` and `DEVELOPER_PASSWORD` to bootstrap a
-   developer account the same way. For Apache, set these in the appropriate
-   virtual host or server configuration, then restart Apache. Use unique,
-   strong passwords and do not commit credentials.
+3. Configure the `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `DEVELOPER_USERNAME`, and
+   `DEVELOPER_PASSWORD` environment variables for the PHP web server. For
+   Apache, set them in the appropriate virtual
+   host or server configuration, then restart Apache. Use a unique, strong
+   password and do not commit credentials.
 4. Open the project through the local web server.
 
-The environment credentials bootstrap the configured admin, collector, or
-developer account on its first successful login. After that, accounts should
-be created and managed from the Admin Manage Users page; users cannot select or
-change their role on the login form. Developer accounts open the protected
-Developer Maintenance dashboard, where they can start tasks, record system
-updates, and mark work complete. Maintenance history is stored in
-`developer_maintenance_tasks`.
+The environment credentials bootstrap configured administrator and developer accounts. Drivers can register from the Login page, and administrators can create administrator or driver accounts from Manage Accounts. Residents use the public pages without signing in.
