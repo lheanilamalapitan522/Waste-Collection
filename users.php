@@ -55,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'That username is already in use.';
             } else {
                 $insert = $pdo->prepare(
-                    'INSERT INTO users (username, password_hash, role, status)
-                     VALUES (:username, :password_hash, :role, "active")'
+                    "INSERT INTO users (username, password_hash, role, status)
+                     VALUES (:username, :password_hash, :role, 'active')"
                 );
                 $insert->execute([
                     ':username' => $username,

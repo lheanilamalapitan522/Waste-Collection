@@ -9,7 +9,7 @@ if ($route) {
     $pointsQuery = $pdo->prepare('SELECT point_name, latitude, longitude FROM route_points WHERE route_id = :route_id ORDER BY point_order');
     $pointsQuery->execute([':route_id' => $route['id']]);
     $routePoints = $pointsQuery->fetchAll();
-    $scheduleQuery = $pdo->prepare('SELECT day_name, collection_time FROM schedule WHERE route_id = :route_id AND status = "active" ORDER BY FIELD(day_name, "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")');
+    $scheduleQuery = $pdo->prepare("SELECT day_name, collection_time FROM schedule WHERE route_id = :route_id AND status = 'active' ORDER BY FIELD(day_name, 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')");
     $scheduleQuery->execute([':route_id' => $route['id']]);
     $routeSchedules = $scheduleQuery->fetchAll();
 }

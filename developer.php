@@ -32,9 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $taskId = filter_var($_POST['task_id'] ?? null, FILTER_VALIDATE_INT);
         if ($taskId) {
             $statement = $pdo->prepare(
-                'UPDATE developer_maintenance_tasks
-                 SET status = "completed", completed_at = CURRENT_TIMESTAMP
-                 WHERE id = :id AND status = "in_progress"'
+                "UPDATE developer_maintenance_tasks
+                 SET status = 'completed', completed_at = CURRENT_TIMESTAMP
+                 WHERE id = :id AND status = 'in_progress'"
             );
             $statement->execute([':id' => $taskId]);
             $message = $statement->rowCount() ? 'Maintenance task completed.' : 'That task is no longer in progress.';
@@ -51,7 +51,7 @@ $tasks = $pdo->query(
      FROM developer_maintenance_tasks ORDER BY created_at DESC, id DESC'
 )->fetchAll();
 $openTasks = (int) $pdo->query(
-    'SELECT COUNT(*) FROM developer_maintenance_tasks WHERE status = "in_progress"'
+    "SELECT COUNT(*) FROM developer_maintenance_tasks WHERE status = 'in_progress'"
 )->fetchColumn();
 ?>
 <!DOCTYPE html>

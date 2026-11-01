@@ -12,8 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($username !== '' && $password !== '') {
         $statement = $pdo->prepare(
-            'SELECT username, password_hash, role FROM users
-             WHERE username = :username AND status = "active" LIMIT 1'
+            "SELECT username, password_hash, role FROM users
+             WHERE username = :username AND status = 'active' LIMIT 1"
         );
         $statement->execute([':username' => $username]);
         $account = $statement->fetch();
@@ -46,9 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     hash_equals($configuredAccount['password'], $password)) {
                     $account = $configuredAccount;
                     $insert = $pdo->prepare(
-                        'INSERT INTO users (username, password_hash, role)
+                        "INSERT INTO users (username, password_hash, role)
                          VALUES (:username, :password_hash, :role)
-                         ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), role = VALUES(role), status = "active"'
+                         ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), role = VALUES(role), status = 'active'"
                     );
                     $insert->execute([
                         ':username' => $username,
