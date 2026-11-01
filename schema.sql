@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NULL,
     role ENUM('admin', 'collector', 'developer', 'resident') NOT NULL,
     status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+    privacy_consented_at DATETIME NULL,
+    privacy_policy_version VARCHAR(20) NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

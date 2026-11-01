@@ -6,6 +6,12 @@ $registrationNotice = $_SESSION['registration_notice'] ?? null;
 unset($_SESSION['registration_notice']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrfToken = (string) ($_SESSION['csrf_token'] ?? '');
+    if (!hash_equals($csrfToken, (string) ($_POST['csrf_token'] ?? ''))) {
+        $error = 'Your session expired. Refresh the page and try again.';
+    } elseif (isset($_SESSION['login_locked_until']) && time() < (int) $_SESSION['login_locked_until']) {
+        $error = 'Too many failed sign-in attempts. Please wait a few minutes and try again.';
+    } else {
     $username = trim((string) ($_POST['username'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
     $account = null;
@@ -68,6 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['username'] = $account['username'];
         $_SESSION['role'] = $account['role'];
         $_SESSION['admin_logged_in'] = is_admin();
+        unset($_SESSION['login_attempts'], $_SESSION['login_locked_until']);
         $destination = match ($account['role']) {
             'admin' => 'admin.php',
             'collector' => 'collector.php',
@@ -77,7 +84,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ' . $destination);
         exit;
     } else {
+        $_SESSION['login_attempts'] = ((int) ($_SESSION['login_attempts'] ?? 0)) + 1;
+        if ($_SESSION['login_attempts'] >= 5) {
+            $_SESSION['login_locked_until'] = time() + 300;
+        }
         $error = "Invalid username or password";
+    }
     }
 }
 ?>
@@ -113,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
         
         <form method="POST" action="login.php" autocomplete="off">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) $_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
             <div class="form-group">
                 <label class="form-label" for="username">Username</label>
                 <input class="form-control" type="text" id="username" name="username" placeholder="Username" autocomplete="off" required>

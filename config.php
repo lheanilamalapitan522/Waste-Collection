@@ -8,6 +8,12 @@ define('DB_NAME', getenv('DB_NAME') ?: 'mauban_waste_collection');
 define('DB_USER', getenv('DB_USER') ?: 'root');
 define('DB_PASS', getenv('DB_PASS') ?: '');
 
+if (getenv('APP_ENV') === 'production' && (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off')) {
+    $httpsUrl = 'https://' . ($_SERVER['HTTP_HOST'] ?? '') . ($_SERVER['REQUEST_URI'] ?? '/');
+    header('Location: ' . $httpsUrl, true, 308);
+    exit;
+}
+
 try {
     $pdo = new PDO(
         'mysql:host=' . DB_HOST . ';port=' . DB_PORT . ';dbname=' . DB_NAME . ';charset=utf8mb4',

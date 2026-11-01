@@ -51,5 +51,22 @@ $adminPages = ['admin.php', 'manage-service.php', 'users.php', 'developer.php'];
 </aside>
 <?php endif; ?>
 
+<div id="cookie-consent" class="cookie-consent" role="dialog" aria-label="Cookie notice" hidden>
+    <span>We use a necessary session cookie for sign-in and security. <a href="cookies.php">Learn more</a>.</span>
+    <button type="button" class="btn btn-success btn-sm" data-cookie-accept>OK</button>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous" defer></script>
+<script>
+    (function () {
+        var banner = document.getElementById('cookie-consent');
+        if (!banner) return;
+        if (window.localStorage.getItem('maubanCookieNoticeSeen') !== '1') banner.hidden = false;
+        var button = banner.querySelector('[data-cookie-accept]');
+        if (button) button.addEventListener('click', function () {
+            window.localStorage.setItem('maubanCookieNoticeSeen', '1');
+            banner.hidden = true;
+        });
+    }());
+</script>
 <?php if (getenv('APP_ENV') === 'development'): ?><script src="dev-reload.js" defer></script><?php endif; ?>

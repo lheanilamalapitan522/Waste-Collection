@@ -8,6 +8,9 @@ $message = null;
 $error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!hash_equals((string) ($_SESSION['csrf_token'] ?? ''), (string) ($_POST['csrf_token'] ?? ''))) {
+        $error = 'Your session expired. Refresh the page and try again.';
+    } else {
     $action = (string) ($_POST['action'] ?? '');
 
     if ($action === 'create') {
@@ -43,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } else {
         $error = 'Unknown maintenance action.';
+    }
     }
 }
 
@@ -83,6 +87,7 @@ $openTasks = (int) $pdo->query(
         <?php if ($message): ?><p style="color: #155724;"><?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?></p><?php endif; ?>
         <?php if ($error): ?><p style="color: #b00020;"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p><?php endif; ?>
         <form method="POST" action="developer.php">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) $_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
             <input type="hidden" name="action" value="create">
             <div class="form-group">
                 <label for="title">Task title</label>
@@ -115,6 +120,7 @@ $openTasks = (int) $pdo->query(
                     <td>
                         <?php if ($task['status'] === 'in_progress'): ?>
                             <form method="POST" action="developer.php">
+                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars((string) $_SESSION['csrf_token'], ENT_QUOTES, 'UTF-8'); ?>">
                                 <input type="hidden" name="action" value="complete">
                                 <input type="hidden" name="task_id" value="<?php echo (int) $task['id']; ?>">
                                 <button type="submit" class="add-btn">Mark complete</button>

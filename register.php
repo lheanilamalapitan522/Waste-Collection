@@ -27,6 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.';
         } elseif ($role !== 'collector') {
             $error = 'Only garbage collector accounts can be registered here.';
+        } elseif ((string) ($_POST['privacy_consent'] ?? '') !== '1') {
+            $error = 'You must agree to the Terms of Service and Privacy Policy.';
         } elseif (!$routeId) {
             $error = 'Select an active collection route.';
         } else {
@@ -44,13 +46,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $pdo->beginTransaction();
                     $insert = $pdo->prepare(
-                        "INSERT INTO users (username, password_hash, role, status)
-                         VALUES (:username, :password_hash, :role, 'active')"
+                        "INSERT INTO users
+                         (username, password_hash, role, status, privacy_consented_at, privacy_policy_version)
+                         VALUES (:username, :password_hash, :role, 'active', UTC_TIMESTAMP(), :privacy_policy_version)"
                     );
                     $insert->execute([
                         ':username' => $username,
                         ':password_hash' => password_hash($password, PASSWORD_DEFAULT),
-                        ':role' => $role
+                        ':role' => $role,
+                        ':privacy_policy_version' => '2026-11-01'
                     ]);
                     $driver = $pdo->prepare(
                         "INSERT INTO drivers (name, route_id, status, user_id)
@@ -136,6 +140,13 @@ $routes = $pdo->query("SELECT id, name, barangay FROM routes WHERE status = 'act
                         </option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="register-consent" name="privacy_consent" value="1" required>
+                <label class="form-check-label" for="register-consent">
+                    I agree to the <a href="terms.php" target="_blank" rel="noopener">Terms of Service</a> and
+                    <a href="privacy.php" target="_blank" rel="noopener">Privacy Policy</a>.
+                </label>
             </div>
             <button type="submit" class="submit-btn btn btn-success w-100">Create account</button>
         </form>
