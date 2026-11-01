@@ -1,7 +1,7 @@
 <?php
 require_once 'auth.php';
 $current_page = basename($_SERVER['PHP_SELF']);
-$adminPages = ['admin.php', 'manage-service.php', 'users.php', 'developer.php'];
+$adminPages = ['admin.php', 'manage-service.php', 'manage-routes.php', 'manage-schedules.php', 'manage-trucks.php', 'users.php', 'developer.php'];
 ?>
 <nav class="navbar navbar-expand-lg" aria-label="Main navigation">
     <div class="container-fluid">
@@ -42,9 +42,9 @@ $adminPages = ['admin.php', 'manage-service.php', 'users.php', 'developer.php'];
     <nav class="nav flex-column admin-sidebar-nav" aria-label="Admin pages">
         <a class="nav-link <?php echo $current_page === 'index.php' ? 'active' : ''; ?>" href="index.php"><i class="bi bi-house-door" aria-hidden="true"></i><span>Home</span></a>
         <a class="nav-link <?php echo $current_page === 'admin.php' ? 'active' : ''; ?>" href="admin.php"><i class="bi bi-speedometer2" aria-hidden="true"></i><span>Overview</span></a>
-        <a class="nav-link <?php echo $current_page === 'manage-service.php' ? 'active' : ''; ?>" href="manage-service.php#routes"><i class="bi bi-signpost-split" aria-hidden="true"></i><span>Manage routes</span></a>
-        <a class="nav-link <?php echo $current_page === 'manage-service.php' ? 'active' : ''; ?>" href="manage-service.php#schedules"><i class="bi bi-calendar2-week" aria-hidden="true"></i><span>Manage schedules</span></a>
-        <a class="nav-link <?php echo $current_page === 'manage-service.php' ? 'active' : ''; ?>" href="manage-service.php#trucks"><i class="bi bi-truck" aria-hidden="true"></i><span>Manage trucks</span></a>
+        <a class="nav-link <?php echo $current_page === 'manage-routes.php' ? 'active' : ''; ?>" href="manage-routes.php"><i class="bi bi-signpost-split" aria-hidden="true"></i><span>Manage routes</span></a>
+        <a class="nav-link <?php echo $current_page === 'manage-schedules.php' ? 'active' : ''; ?>" href="manage-schedules.php"><i class="bi bi-calendar2-week" aria-hidden="true"></i><span>Manage schedules</span></a>
+        <a class="nav-link <?php echo $current_page === 'manage-trucks.php' ? 'active' : ''; ?>" href="manage-trucks.php"><i class="bi bi-truck" aria-hidden="true"></i><span>Manage trucks</span></a>
         <a class="nav-link <?php echo $current_page === 'users.php' ? 'active' : ''; ?>" href="users.php"><i class="bi bi-people" aria-hidden="true"></i><span>Manage accounts</span></a>
         <?php if (is_developer()): ?><a class="nav-link <?php echo $current_page === 'developer.php' ? 'active' : ''; ?>" href="developer.php"><i class="bi bi-tools" aria-hidden="true"></i><span>Maintenance</span></a><?php endif; ?>
     </nav>

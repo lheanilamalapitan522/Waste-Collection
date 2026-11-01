@@ -46,6 +46,11 @@ contain changes from multiple contributors.
 
 - Admins have a separate sidebar for overview, route, schedule, truck, and
   account management. Public navigation remains available at the top.
+- Manage routes, manage schedules, and manage trucks now open separate admin
+  pages (`manage-routes.php`, `manage-schedules.php`, and `manage-trucks.php`).
+  They share the role-protected save logic in `manage-service.php`, but render
+  only the selected section. Each page keeps its read-only default view and
+  explicit Edit control.
 - Routes, schedules, and trucks are displayed read-only by default, with edit
   controls to open their management forms.
 - Route stops use editable ordered rows for stop name and coordinates.
@@ -146,7 +151,7 @@ contain changes from multiple contributors.
 | --- | --- |
 | Maps and location feed | `index.php`, `route.php`, `live-tracking.php`, `latest-location.php`, `location-update.php`, `tracking.php`, `collector.js` |
 | Authentication and accounts | `auth.php`, `session.php`, `login.php`, `register.php`, `users.php`, `forgot-password.php`, `nav.php` |
-| Admin service management | `admin.php`, `manage-service.php`, `schema.sql`, `migrations/002_assign_collectors_to_routes.sql` |
+| Admin service management | `admin.php`, `manage-service.php`, `manage-routes.php`, `manage-schedules.php`, `manage-trucks.php`, `schema.sql`, `migrations/002_assign_collectors_to_routes.sql` |
 | Shared UI and runtime | `style.css`, `bootstrap-head.php`, `script.js`, `docker-compose.yml`, `Dockerfile`, `dev-reload.js`, `dev-version.php` |
 | Project notes | `README.md`, `CONTRIBUTING.md`, `.env.example`, `changes-report.md` |
 
