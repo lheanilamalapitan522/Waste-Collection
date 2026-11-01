@@ -13,7 +13,13 @@ if ($secureCookies) {
 
 ini_set('session.cookie_httponly', '1');
 ini_set('session.use_strict_mode', '1');
+// Keep idle sessions from expiring due to PHP's default 24-minute garbage collection.
+// The browser session cookie still ends when the browser session closes, and logout
+// explicitly destroys the session. A hosting platform may also impose its own limit.
+ini_set('session.gc_maxlifetime', '2147483647');
+ini_set('session.gc_probability', '0');
 session_set_cookie_params([
+    'lifetime' => 0,
     'httponly' => true,
     'secure' => $secureCookies,
     'samesite' => 'Lax'

@@ -45,7 +45,7 @@ require 'config.php';
         <p>The site may load Bootstrap interface assets from jsDelivr and display maps from OpenStreetMap. These services may receive standard technical request information when your browser loads their resources. The application does not use advertising cookies or third-party analytics cookies.</p>
 
         <h2>Retention and your choices</h2>
-        <p>The session cookie expires when the session ends or the server invalidates it. You can clear cookies and local storage through your browser settings, but doing so may sign you out and require location permission again. Collectors can stop location sharing at any time.</p>
+        <p>The application does not automatically sign you out after a period of inactivity. The session cookie lasts until the browser session ends; signing out or server-side session cleanup also ends access. You can clear cookies and local storage through your browser settings, but doing so may sign you out and require location permission again. Collectors can stop location sharing at any time.</p>
         <p>For account access, data deletion, or privacy questions, contact the municipal project administrator. Requests should identify the relevant account without including a password or other secret.</p>
 
         <h2>Policy updates</h2>

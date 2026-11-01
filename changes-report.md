@@ -37,6 +37,10 @@ contain changes from multiple contributors.
   registration role.
 - Passwords require at least eight characters, including uppercase, lowercase,
   and a number. Password fields have visibility toggles.
+- PHP no longer automatically removes idle sessions on its default 24-minute
+  garbage-collection interval. The browser session cookie still ends when the
+  browser session closes; logout remains available, and hosting platforms may
+  apply their own session storage limits.
 - Admin account rows now have an inline new-password field, working eye toggle,
   and **Reset password** button. The old **Set temporary password** button was
   removed. Reset requests retain server-side validation and CSRF checks.
