@@ -98,8 +98,12 @@ INSERT IGNORE INTO route_points
 INSERT IGNORE INTO schedule
     (id, route_id, day_name, collection_time, status) VALUES
     (1, 1, 'Monday', '8:00 AM - 11:00 AM', 'active'),
-    (2, 1, 'Wednesday', '8:00 AM - 11:00 AM', 'active'),
-    (3, 1, 'Friday', '8:00 AM - 11:00 AM', 'active'),
-    (4, 2, 'Tuesday', '9:00 AM - 12:00 PM', 'active'),
-    (5, 2, 'Thursday', '9:00 AM - 12:00 PM', 'active'),
-    (6, 3, 'Monday', '1:00 PM - 4:00 PM', 'inactive');
+    (2, 1, 'Tuesday', '8:00 AM - 11:00 AM', 'active'),
+    (3, 1, 'Wednesday', '8:00 AM - 11:00 AM', 'active'),
+    (4, 1, 'Thursday', '8:00 AM - 11:00 AM', 'active'),
+    (5, 1, 'Friday', '8:00 AM - 11:00 AM', 'active'),
+    (6, 1, 'Saturday', '8:00 AM - 11:00 AM', 'active'),
+    (7, 1, 'Sunday', '8:00 AM - 11:00 AM', 'active'),
+    (8, 2, 'Tuesday', '9:00 AM - 12:00 PM', 'active'),
+    (9, 2, 'Thursday', '9:00 AM - 12:00 PM', 'active'),
+    (10, 3, 'Monday', '1:00 PM - 4:00 PM', 'inactive');

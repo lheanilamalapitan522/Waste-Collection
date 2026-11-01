@@ -37,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $username = trim((string) ($_POST['username'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
         $role = (string) ($_POST['role'] ?? '');
+        $routeId = filter_var($_POST['route_id'] ?? null, FILTER_VALIDATE_INT);
 
         if (!preg_match('/^[A-Za-z0-9._-]{3,100}$/', $username)) {
             $error = 'Username must be 3-100 characters and use only letters, numbers, dots, underscores, or hyphens.';
@@ -47,6 +48,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $error = 'Password must be at least 8 characters and include an uppercase letter, a lowercase letter, and a number.';
         } elseif (!in_array($role, ['admin', 'collector'], true)) {
             $error = 'Select a valid account role.';
+        } elseif ($role === 'collector' && !$routeId) {
+            $error = 'Select an active collection route for the collector.';
         } else {
             $statement = $pdo->prepare('SELECT id FROM users WHERE username = :username LIMIT 1');
             $statement->execute([':username' => $username]);
@@ -54,16 +57,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($statement->fetch()) {
                 $error = 'That username is already in use.';
             } else {
-                $insert = $pdo->prepare(
-                    "INSERT INTO users (username, password_hash, role, status)
-                     VALUES (:username, :password_hash, :role, 'active')"
-                );
-                $insert->execute([
-                    ':username' => $username,
-                    ':password_hash' => password_hash($password, PASSWORD_DEFAULT),
-                    ':role' => $role
-                ]);
-                $message = 'Account created successfully.';
+                try {
+                    if ($role === 'collector') {
+                        $routeCheck = $pdo->prepare("SELECT id FROM routes WHERE id = :route_id AND status = 'active'");
+                        $routeCheck->execute([':route_id' => $routeId]);
+                        if (!$routeCheck->fetch()) {
+                            throw new InvalidArgumentException('Select an active collection route for the collector.');
+                        }
+                    }
+                    $pdo->beginTransaction();
+                    $insert = $pdo->prepare(
+                        "INSERT INTO users (username, password_hash, role, status)
+                         VALUES (:username, :password_hash, :role, 'active')"
+                    );
+                    $insert->execute([
+                        ':username' => $username,
+                        ':password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                        ':role' => $role
+                    ]);
+                    if ($role === 'collector') {
+                        $driver = $pdo->prepare(
+                            "INSERT INTO drivers (name, route_id, status, user_id)
+                             VALUES (:name, :route_id, 'active', :user_id)"
+                        );
+                        $driver->execute([
+                            ':name' => $username,
+                            ':route_id' => $routeId,
+                            ':user_id' => $pdo->lastInsertId()
+                        ]);
+                    }
+                    $pdo->commit();
+                    $message = $role === 'collector'
+                        ? 'Collector account created and assigned to the selected route. Link a truck before location sharing.'
+                        : 'Account created successfully.';
+                } catch (InvalidArgumentException $exception) {
+                    if ($pdo->inTransaction()) $pdo->rollBack();
+                    $error = $exception->getMessage();
+                } catch (PDOException $exception) {
+                    if ($pdo->inTransaction()) $pdo->rollBack();
+                    throw $exception;
+                }
             }
         }
     }
@@ -72,6 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $users = $pdo->query(
     'SELECT id, username, role, status, created_at FROM users ORDER BY username'
 )->fetchAll();
+$routes = $pdo->query("SELECT id, name, barangay FROM routes WHERE status = 'active' ORDER BY name")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -120,6 +154,18 @@ $users = $pdo->query(
                     <option value="collector">Garbage collector</option>
                     <option value="admin">Administrator</option>
                 </select>
+            </div>
+            <div class="form-group">
+                <label for="route_id">Assigned collection route</label>
+                <select class="form-select" id="route_id" name="route_id">
+                    <option value="">Select a route for collectors</option>
+                    <?php foreach ($routes as $route): ?>
+                        <option value="<?php echo (int) $route['id']; ?>">
+                            <?php echo htmlspecialchars($route['name'] . ' — ' . $route['barangay'], ENT_QUOTES, 'UTF-8'); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <small>Required when creating a collector account.</small>
             </div>
             <button type="submit" class="submit-btn">Create Account</button>
         </form>
