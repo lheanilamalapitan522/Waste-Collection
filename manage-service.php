@@ -229,14 +229,37 @@ $sectionTitles = [
 
     <?php if ($managementSection === 'trucks'): ?>
     <section class="section-card p-3 p-md-4 mb-4" id="trucks">
-        <div class="management-section-heading"><div><h2 class="section-title">Trucks and driver assignments</h2><p class="text-muted mb-0">Link each driver to a collector login and route. The live map shares their location only during that route’s active schedule.</p></div><button class="btn btn-outline-success" type="button" data-editor-toggle="truckEditor" aria-expanded="false">Edit</button></div>
-        <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Truck</th><th>Assigned driver</th><th>Collector login</th><th>Assigned route</th><th>Status</th></tr></thead><tbody>
-        <?php foreach ($trucks as $truck): ?><tr><td><?php echo $h($truck['vehicle_number']); ?></td><td><?php echo $h($truck['driver_name'] ?? 'Unassigned'); ?></td><td><?php echo $h($truck['collector_username'] ?? 'Not linked'); ?></td><td><?php echo $h($truck['route_name'] ?? 'Not assigned'); ?></td><td><?php echo $h(ucfirst($truck['status'])); ?></td></tr><?php endforeach; ?>
-        <?php if (!$trucks): ?><tr><td colspan="5" class="text-muted">No trucks have been added.</td></tr><?php endif; ?></tbody></table></div>
-        <div class="management-editor" id="truckEditor" hidden>
-        <?php foreach ($trucks as $truck): ?><form method="post" class="border rounded p-3 mb-3"><input type="hidden" name="csrf_token" value="<?php echo $h($csrfToken); ?>"><input type="hidden" name="action" value="save_truck"><input type="hidden" name="id" value="<?php echo (int) $truck['id']; ?>"><div class="row g-3 align-items-end"><div class="col-md-3"><label class="form-label">Truck number/name</label><input class="form-control" name="vehicle_number" maxlength="50" required value="<?php echo $h($truck['vehicle_number']); ?>"></div><div class="col-md-2"><label class="form-label">Assigned driver</label><select class="form-select" name="driver_id"><option value="">Unassigned</option><?php foreach ($drivers as $driver): ?><option value="<?php echo (int) $driver['id']; ?>" <?php echo (int) $truck['driver_id'] === (int) $driver['id'] ? 'selected' : ''; ?>><?php echo $h($driver['name']); ?></option><?php endforeach; ?></select></div><div class="col-md-2"><label class="form-label">Collector login</label><select class="form-select" name="collector_user_id"><option value="">Select login</option><?php foreach ($collectorAccounts as $account): ?><option value="<?php echo (int) $account['id']; ?>" <?php echo (int) $truck['collector_user_id'] === (int) $account['id'] ? 'selected' : ''; ?>><?php echo $h($account['username']); ?></option><?php endforeach; ?></select></div><div class="col-md-2"><label class="form-label">Assigned route</label><select class="form-select" name="route_id"><option value="">Select route</option><?php foreach ($routes as $route): ?><option value="<?php echo (int) $route['id']; ?>" <?php echo (int) $truck['route_id'] === (int) $route['id'] ? 'selected' : ''; ?>><?php echo $h($route['name']); ?></option><?php endforeach; ?></select></div><div class="col-md-1"><label class="form-label">Status</label><select class="form-select" name="status"><option value="active" <?php echo $truck['status'] === 'active' ? 'selected' : ''; ?>>Active</option><option value="inactive" <?php echo $truck['status'] === 'inactive' ? 'selected' : ''; ?>>Inactive</option></select></div><div class="col-md-2"><button class="btn btn-success">Save</button></div></div></form><?php endforeach; ?>
+        <div class="management-section-heading"><div><h2 class="section-title">Trucks and driver assignments</h2><p class="text-muted mb-0">Link each driver to a collector login and route. The live map shares their location only during that route’s active schedule.</p></div></div>
+        <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>Truck</th><th>Assigned driver</th><th>Collector login</th><th>Assigned route</th><th>Status</th><th class="text-end">Action</th></tr></thead><tbody>
+        <?php foreach ($trucks as $truck): ?>
+        <tr>
+            <td><?php echo $h($truck['vehicle_number']); ?></td>
+            <td><?php echo $h($truck['driver_name'] ?? 'Unassigned'); ?></td>
+            <td><?php echo $h($truck['collector_username'] ?? 'Not linked'); ?></td>
+            <td><?php echo $h($truck['route_name'] ?? 'Not assigned'); ?></td>
+            <td><?php echo $h(ucfirst($truck['status'])); ?></td>
+            <td class="text-end"><button class="btn btn-outline-success btn-sm" type="button" data-truck-editor-toggle="truckEditor-<?php echo (int) $truck['id']; ?>" aria-controls="truckEditor-<?php echo (int) $truck['id']; ?>" aria-expanded="false">Edit</button></td>
+        </tr>
+        <tr id="truckEditor-<?php echo (int) $truck['id']; ?>" hidden>
+            <td colspan="6">
+                <form method="post" class="border rounded p-3">
+                    <input type="hidden" name="csrf_token" value="<?php echo $h($csrfToken); ?>">
+                    <input type="hidden" name="action" value="save_truck">
+                    <input type="hidden" name="id" value="<?php echo (int) $truck['id']; ?>">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3"><label class="form-label">Truck number/name</label><input class="form-control" name="vehicle_number" maxlength="50" required value="<?php echo $h($truck['vehicle_number']); ?>"></div>
+                        <div class="col-md-2"><label class="form-label">Assigned driver</label><select class="form-select" name="driver_id"><option value="">Unassigned</option><?php foreach ($drivers as $driver): ?><option value="<?php echo (int) $driver['id']; ?>" <?php echo (int) $truck['driver_id'] === (int) $driver['id'] ? 'selected' : ''; ?>><?php echo $h($driver['name']); ?></option><?php endforeach; ?></select></div>
+                        <div class="col-md-2"><label class="form-label">Collector login</label><select class="form-select" name="collector_user_id"><option value="">Select login</option><?php foreach ($collectorAccounts as $account): ?><option value="<?php echo (int) $account['id']; ?>" <?php echo (int) $truck['collector_user_id'] === (int) $account['id'] ? 'selected' : ''; ?>><?php echo $h($account['username']); ?></option><?php endforeach; ?></select></div>
+                        <div class="col-md-2"><label class="form-label">Assigned route</label><select class="form-select" name="route_id"><option value="">Select route</option><?php foreach ($routes as $route): ?><option value="<?php echo (int) $route['id']; ?>" <?php echo (int) $truck['route_id'] === (int) $route['id'] ? 'selected' : ''; ?>><?php echo $h($route['name']); ?></option><?php endforeach; ?></select></div>
+                        <div class="col-md-1"><label class="form-label">Status</label><select class="form-select" name="status"><option value="active" <?php echo $truck['status'] === 'active' ? 'selected' : ''; ?>>Active</option><option value="inactive" <?php echo $truck['status'] === 'inactive' ? 'selected' : ''; ?>>Inactive</option></select></div>
+                        <div class="col-md-2"><button class="btn btn-success">Save truck</button></div>
+                    </div>
+                </form>
+            </td>
+        </tr>
+        <?php endforeach; ?>
+        <?php if (!$trucks): ?><tr><td colspan="6" class="text-muted">No trucks have been added.</td></tr><?php endif; ?></tbody></table></div>
         <details class="border rounded p-3"><summary class="fw-semibold">Add a truck</summary><form method="post" class="row g-3 mt-1"><input type="hidden" name="csrf_token" value="<?php echo $h($csrfToken); ?>"><input type="hidden" name="action" value="save_truck"><div class="col-md-3"><label class="form-label">Truck number/name</label><input class="form-control" name="vehicle_number" maxlength="50" required></div><div class="col-md-2"><label class="form-label">Assign driver</label><select class="form-select" name="driver_id"><option value="">Unassigned</option><?php foreach ($drivers as $driver): ?><option value="<?php echo (int) $driver['id']; ?>"><?php echo $h($driver['name']); ?></option><?php endforeach; ?></select></div><div class="col-md-2"><label class="form-label">Collector login</label><select class="form-select" name="collector_user_id"><option value="">Select login</option><?php foreach ($collectorAccounts as $account): ?><option value="<?php echo (int) $account['id']; ?>"><?php echo $h($account['username']); ?></option><?php endforeach; ?></select></div><div class="col-md-2"><label class="form-label">Assigned route</label><select class="form-select" name="route_id"><option value="">Select route</option><?php foreach ($routes as $route): ?><option value="<?php echo (int) $route['id']; ?>"><?php echo $h($route['name']); ?></option><?php endforeach; ?></select></div><div class="col-md-1"><label class="form-label">Status</label><select class="form-select" name="status"><option value="active">Active</option><option value="inactive">Inactive</option></select></div><div class="col-md-2 align-self-end"><button class="btn btn-success">Add truck</button></div></form></details>
-        </div>
     </section>
     <?php endif; ?>
 </main>
@@ -246,6 +269,16 @@ document.querySelectorAll('[data-editor-toggle]').forEach((button) => {
         const editor = document.getElementById(button.dataset.editorToggle);
         const isOpening = editor.hidden;
         editor.hidden = !isOpening;
+        button.setAttribute('aria-expanded', String(isOpening));
+        button.textContent = isOpening ? 'Done' : 'Edit';
+    });
+});
+
+document.querySelectorAll('[data-truck-editor-toggle]').forEach((button) => {
+    button.addEventListener('click', () => {
+        const editorRow = document.getElementById(button.dataset.truckEditorToggle);
+        const isOpening = editorRow.hidden;
+        editorRow.hidden = !isOpening;
         button.setAttribute('aria-expanded', String(isOpening));
         button.textContent = isOpening ? 'Done' : 'Edit';
     });

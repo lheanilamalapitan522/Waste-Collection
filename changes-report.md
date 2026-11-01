@@ -55,6 +55,8 @@ contain changes from multiple contributors.
   They share the role-protected save logic in `manage-service.php`, but render
   only the selected section. Each page keeps its read-only default view and
   explicit Edit control.
+- Truck rows have individual Edit controls after Status. Opening one reveals
+  only that truck's assignment form; saving submits only that vehicle record.
 - Routes, schedules, and trucks are displayed read-only by default, with edit
   controls to open their management forms.
 - Route stops use editable ordered rows for stop name and coordinates.
