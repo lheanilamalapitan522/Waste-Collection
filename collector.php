@@ -22,10 +22,10 @@ require_role('collector');
         </div>
     </div>
     <div class="page-card">
-        <h2>Start location sharing</h2>
-        <p>Your browser will ask for location permission. Keep this page open while you are on duty. GPS permission may stay enabled, but locations are not stored or shown outside your assigned working schedule.</p>
+        <h2>Collector location sharing</h2>
+        <p>Allow location access once when your browser asks. If permission is saved, sharing starts automatically when you open this page. Keep it open and your phone's location service on while on duty. The server stores and displays your location only during your assigned active schedule.</p>
         <p id="collector-status" class="tracking-status">Tracking is stopped.</p>
-        <button id="collector-toggle" class="submit-btn" type="button">Start sharing location</button>
+        <button id="collector-toggle" class="submit-btn" type="button">Enable location sharing</button>
         <a href="live-tracking.php" class="btn-secondary">View public tracking map</a>
     </div>
 </main>
