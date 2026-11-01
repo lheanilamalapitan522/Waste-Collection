@@ -98,9 +98,13 @@ HTTPS in production. `http://localhost:8080` is permitted for local testing.
 
 ## Setup
 
+For a copy-ready local environment template, installation prerequisites,
+database migration instructions, first-run account setup, and a manual
+requirements checklist, see [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ### Docker
 
-1. Create a `.env` file in the project root and set `MYSQL_DATABASE`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `ADMIN_USERNAME`, and `ADMIN_PASSWORD`. Set `DEVELOPER_USERNAME` and `DEVELOPER_PASSWORD` to enable developer login. Optional driver bootstrap credentials are `COLLECTOR_USERNAME` and `COLLECTOR_PASSWORD`.
+1. Copy `.env.example` to `.env` in the project root and replace every `CHANGE_ME` placeholder. The file sets local MySQL and admin credentials; set `DEVELOPER_USERNAME` and `DEVELOPER_PASSWORD` to enable the optional developer login. Leave `COLLECTOR_USERNAME` and `COLLECTOR_PASSWORD` blank and register a collector through the site.
 2. Maps on the home, route, and live-tracking pages use OpenStreetMap embeds and do not require a map API key. Location markers are shown as page overlays while the embedded map recenters on the reported coordinates.
 3. Start the application:
 
@@ -170,9 +174,9 @@ container.
 
 1. Create a MySQL database with an external provider that allows connections
    from Vercel.
-2. Import [schema.sql](./schema.sql) into that database. Apply
-   [migrations/002_assign_collectors_to_routes.sql](./migrations/002_assign_collectors_to_routes.sql)
-   as well when upgrading an existing database.
+2. For a new database, import [schema.sql](./schema.sql). For an existing
+   database, back it up and apply only the missing migrations as described in
+   the [database setup guide](./CONTRIBUTING.md#5-database-schema-and-migrations).
 3. Import this repository into Vercel and select **Container** as the framework
    preset. The root `Dockerfile` is used automatically.
 4. Add these Vercel environment variables for the deployment:
@@ -213,7 +217,7 @@ accept the [Privacy Policy](./privacy.php) and [Terms of Service](./terms.php).
 The [Cookie Policy](./cookies.php) explains the necessary session cookie and
 the local-only notice acknowledgement.
 
-When upgrading an existing database, apply
+For older databases, apply
 [migrations/004_add_privacy_consent_metadata.sql](./migrations/004_add_privacy_consent_metadata.sql)
-after the earlier migrations. Do not commit `.env` files, passwords, database
-credentials, or API tokens.
+only if its columns are missing. See the [migration guide](./CONTRIBUTING.md#5-database-schema-and-migrations).
+Do not commit `.env` files, passwords, database credentials, or API tokens.

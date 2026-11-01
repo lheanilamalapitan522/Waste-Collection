@@ -1,6 +1,6 @@
 # Changes Report
 
-Updated: 2026-11-01
+Updated: 2026-11-02
 
 This file is a handoff summary of the current project changes in the shared
 working tree. Check `git status` and `git diff` before editing; the tree may
@@ -58,6 +58,9 @@ contain changes from multiple contributors.
 
 ## Data and runtime
 
+- Added `.env.example` with local-only placeholders and `CONTRIBUTING.md` with
+  prerequisites, Docker setup, account setup, migration guidance, manual
+  requirement checks, troubleshooting, and pull request workflow.
 - `schema.sql` defines users, routes, route points, vehicles, drivers,
   schedules, and GPS locations, with development seed data.
 - `migrations/002_assign_collectors_to_routes.sql` supports linking driver
@@ -68,7 +71,7 @@ contain changes from multiple contributors.
 - `config.php` builds its PDO MySQL connection from `DB_HOST`, `DB_PORT`,
   `DB_NAME`, `DB_USER`, and `DB_PASS`. This supports Aiven's custom port; the
   Vercel deployment reads these values from deployment environment variables.
-- `.env.example` was removed at the user's request. Keep actual credentials in
+- `.env.example` contains local placeholders only. Keep actual credentials in
   the local ignored `.env` file and do not put secrets in this report.
 
 ## How the main flows work
@@ -145,7 +148,7 @@ contain changes from multiple contributors.
 | Authentication and accounts | `auth.php`, `session.php`, `login.php`, `register.php`, `users.php`, `forgot-password.php`, `nav.php` |
 | Admin service management | `admin.php`, `manage-service.php`, `schema.sql`, `migrations/002_assign_collectors_to_routes.sql` |
 | Shared UI and runtime | `style.css`, `bootstrap-head.php`, `script.js`, `docker-compose.yml`, `Dockerfile`, `dev-reload.js`, `dev-version.php` |
-| Project notes | `README.md`, `changes-report.md` |
+| Project notes | `README.md`, `CONTRIBUTING.md`, `.env.example`, `changes-report.md` |
 
 ## Integration notes
 
