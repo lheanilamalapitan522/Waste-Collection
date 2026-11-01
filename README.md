@@ -160,3 +160,44 @@ plain HTTP.
 4. Open the project through the local web server.
 
 The environment credentials bootstrap configured administrator and developer accounts. Drivers can register from the Login page, and administrators can create administrator or driver accounts from Manage Accounts. Residents use the public pages without signing in.
+
+### Vercel test deployment
+
+This project can be deployed to Vercel with the Container runtime because the
+repository includes a root `Dockerfile`. The Vercel deployment runs only the
+PHP/Apache application; it does not run `docker-compose.yml` or a local MySQL
+container.
+
+1. Create a MySQL database with an external provider that allows connections
+   from Vercel.
+2. Import [schema.sql](./schema.sql) into that database. Apply
+   [migrations/002_assign_collectors_to_routes.sql](./migrations/002_assign_collectors_to_routes.sql)
+   as well when upgrading an existing database.
+3. Import this repository into Vercel and select **Container** as the framework
+   preset. The root `Dockerfile` is used automatically.
+4. Add these Vercel environment variables for the deployment:
+
+   ```text
+   DB_HOST=your-mysql-host
+   DB_NAME=your-database-name
+   DB_USER=your-database-user
+   DB_PASS=your-database-password
+   ADMIN_USERNAME=your-admin-username
+   ADMIN_PASSWORD=your-strong-admin-password
+   DEVELOPER_USERNAME=your-developer-username
+   DEVELOPER_PASSWORD=your-strong-developer-password
+   COLLECTOR_USERNAME=
+   COLLECTOR_PASSWORD=
+   SESSION_COOKIE_SECURE=1
+   ```
+
+   Use Vercel's encrypted environment-variable settings instead of committing
+   these values to the repository. `MYSQL_*` variables in `.env` and
+   `docker-compose.yml` configure local Docker only; the deployed application
+   reads the `DB_*` variables above.
+5. Deploy and open the generated Vercel URL. Use the Vercel URL over HTTPS so
+   secure session cookies and browser geolocation work correctly.
+
+Vercel deployments use an ephemeral, read-only application filesystem and do
+not persist uploaded files or a local database. Application data must remain
+in the external MySQL database.
