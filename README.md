@@ -178,11 +178,11 @@ container.
 4. Add these Vercel environment variables for the deployment:
 
    ```text
-   DB_HOST=your-mysql-host
-   DB_PORT=your-mysql-port
-   DB_NAME=your-database-name
-   DB_USER=your-database-user
-   DB_PASS=your-database-password
+   DB_HOST=your-copied-aiven-host
+   DB_PORT=27689
+   DB_NAME=defaultdb
+   DB_USER=avnadmin
+   DB_PASS=your-aiven-password
    ADMIN_USERNAME=your-admin-username
    ADMIN_PASSWORD=your-strong-admin-password
    DEVELOPER_USERNAME=your-developer-username
@@ -195,10 +195,25 @@ container.
    Use Vercel's encrypted environment-variable settings instead of committing
    these values to the repository. `MYSQL_*` variables in `.env` and
    `docker-compose.yml` configure local Docker only; the deployed application
-   reads the `DB_*` variables above.
+   reads the `DB_*` variables above. Copy the host and port from Aiven's
+   connection information; use Aiven's shown port if it differs from `27689`.
 5. Deploy and open the generated Vercel URL. Use the Vercel URL over HTTPS so
    secure session cookies and browser geolocation work correctly.
 
 Vercel deployments use an ephemeral, read-only application filesystem and do
 not persist uploaded files or a local database. Application data must remain
 in the external MySQL database.
+
+### Privacy and security
+
+The application uses a necessary secure session cookie, CSRF protection on
+state-changing forms, password hashing, server-side input validation, and
+recent-only GPS retention for live tracking. Self-registered collectors must
+accept the [Privacy Policy](./privacy.php) and [Terms of Service](./terms.php).
+The [Cookie Policy](./cookies.php) explains the necessary session cookie and
+the local-only notice acknowledgement.
+
+When upgrading an existing database, apply
+[migrations/004_add_privacy_consent_metadata.sql](./migrations/004_add_privacy_consent_metadata.sql)
+after the earlier migrations. Do not commit `.env` files, passwords, database
+credentials, or API tokens.

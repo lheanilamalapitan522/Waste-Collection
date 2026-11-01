@@ -65,6 +65,9 @@ contain changes from multiple contributors.
   migration once; admins then link collector logins and routes in Manage trucks.
 - Docker Compose runs the PHP app, MySQL, and phpMyAdmin. Development reload
   support is provided by `dev-reload.js` and `dev-version.php`.
+- `config.php` builds its PDO MySQL connection from `DB_HOST`, `DB_PORT`,
+  `DB_NAME`, `DB_USER`, and `DB_PASS`. This supports Aiven's custom port; the
+  Vercel deployment reads these values from deployment environment variables.
 - `.env.example` was removed at the user's request. Keep actual credentials in
   the local ignored `.env` file and do not put secrets in this report.
 
@@ -72,18 +75,26 @@ contain changes from multiple contributors.
 
 ### Collector location to public map
 
-1. A collector signs in and starts location sharing from `collector.php`.
-   `collector.js` asks the browser for location permission and requests GPS
-   coordinates periodically while tracking is enabled.
-2. The browser posts coordinates to `location-update.php`. The server checks
+1. A collector signs in and enables browser location permission once from
+   `collector.php`. Browsers save this site permission; when it is already
+   granted, `collector.js` resumes location sharing automatically on later
+   visits. The page keeps a local marker of prior successful permission for
+   browsers without a geolocation Permissions API. The collector can stop
+   sharing on the current page.
+2. `collector.js` requests a fresh, high-accuracy GPS reading every five
+   seconds (`enableHighAccuracy: true`, `maximumAge: 0`) while the page remains
+   open. Accuracy depends on the device's GPS and surroundings. Mobile browsers
+   may pause web pages in the background, so this is not guaranteed background
+   tracking.
+3. The browser posts coordinates to `location-update.php`. The server checks
    the authenticated collector, linked driver and truck, active route, and
    current weekday/time against the active schedule before storing a point.
    Coordinates are saved in `gps_locations` with a UTC timestamp.
-3. Public map pages request `latest-location.php` every 10 seconds. That
+4. Public map pages request `latest-location.php` every 10 seconds. That
    endpoint returns a recent location only when the collector remains eligible
    under the active schedule/assignment rules; otherwise it returns a null
    location and status message.
-4. The page validates the returned coordinates and rebuilds the OSM iframe URL
+5. The page validates the returned coordinates and rebuilds the OSM iframe URL
    with a bounding box around them. A truck icon is HTML positioned at the
    center of the iframe container. With no valid location, the icon is hidden
    and the map returns to the Mauban or route default center.
