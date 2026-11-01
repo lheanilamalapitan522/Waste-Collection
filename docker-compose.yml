@@ -1,0 +1,55 @@
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "127.0.0.1:8080:80"
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DB_HOST: db
+      DB_NAME: ${MYSQL_DATABASE:-mauban_waste_collection}
+      DB_USER: ${MYSQL_USER:-mauban}
+      DB_PASS: ${MYSQL_PASSWORD:-mauban_password}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      COLLECTOR_USERNAME: ${COLLECTOR_USERNAME:-collector}
+      COLLECTOR_PASSWORD: ${COLLECTOR_PASSWORD:-}
+      DEVELOPER_USERNAME: ${DEVELOPER_USERNAME:-}
+      DEVELOPER_PASSWORD: ${DEVELOPER_PASSWORD:-}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-0}
+    volumes:
+      - ./:/var/www/html:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-mauban_waste_collection}
+      MYSQL_USER: ${MYSQL_USER:-mauban}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mauban_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    ports:
+      - "127.0.0.1:8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:
