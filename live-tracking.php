@@ -1,7 +1,5 @@
 <?php
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_strict_mode', 1);
-if (session_status() === PHP_SESSION_NONE) { session_start(); }
+require_once 'auth.php';
 require 'config.php';
 ?>
 <!DOCTYPE html>
@@ -9,266 +7,86 @@ require 'config.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Tracking — <?php echo SITE_NAME; ?></title>
-    
-    <link rel="stylesheet" href="dist/leaflet.css" />
-    <script src="dist/leaflet.js"></script>
-    
+    <title>Live Tracking — <?php echo htmlspecialchars(SITE_NAME, ENT_QUOTES, 'UTF-8'); ?></title>
+    <?php require 'bootstrap-head.php'; ?>
     <link rel="stylesheet" href="style.css">
-    
     <style>
-        html, body { margin: 0; padding: 0; }
-        
-        #tracking-map {
-            width: 100%;
-            height: 550px;
-            background: #e5e3df;
-            border-radius: 8px;
-            position: relative;
-            z-index: 1;
-        }
-        
-        .tracking-container {
-            position: relative;
-            margin: 20px 0;
-        }
-        
-        .truck-info-panel {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: #ffffff;
-            padding: 18px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 1000;
-            min-width: 260px;
-        }
-        
-        .truck-info-panel h3 {
-            font-size: 1rem;
-            margin: 0 0 12px 0;
-            color: #222222;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .live-pulse {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            background: #22c55e;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
-            70% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
-            100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
-        }
-        
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 0;
-            font-size: 0.9rem;
-        }
-        
-        .info-row span:first-child { color: #666666; }
-        .info-row span:last-child { font-weight: 600; color: #222222; }
-        
-        .controls-panel {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: #ffffff;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            z-index: 1000;
-        }
-        
-        .controls-panel button {
-            background: #009933;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            margin: 2px;
-        }
-        
-        .controls-panel button.paused { background: #f59e0b; }
-        
-        .route-legend {
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            background: #ffffff;
-            padding: 12px 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            z-index: 1000;
-            font-size: 0.85rem;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 4px 0;
-        }
-        
-        .dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        
-        .dot-start { background: #22c55e; }
-        .dot-route { background: #3b82f6; }
-        .dot-end { background: #ef4444; }
-        
-        .leaflet-container { z-index: 10 !important; }
+        .tracking-status { margin: 12px 0; }
+        .tracking-embed-map { position: relative; width: 100%; height: min(65vh, 620px); min-height: 360px; overflow: hidden; border-radius: 12px; background: #e9efe8; }
+        .tracking-embed-map iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
+        .tracking-location-dot { position: absolute; z-index: 2; top: 50%; left: 50%; display: grid; width: 48px; height: 48px; place-items: center; transform: translate(-50%, -50%); border: 3px solid #fff; border-radius: 50%; background: #087a3e; color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.45); }
+        .tracking-location-dot svg { width: 29px; height: 29px; }
+        .tracking-location-dot::after { position: absolute; inset: -9px; border: 2px solid rgba(8,122,62,.45); border-radius: 50%; content: ""; animation: tracking-pulse 1.8s ease-out infinite; }
+        @keyframes tracking-pulse { 0% { transform: scale(.55); opacity: .9; } 100% { transform: scale(1.45); opacity: 0; } }
     </style>
 </head>
 <body>
 <?php require 'nav.php'; ?>
-
-<div class="page-wrapper">
+<main class="page-wrapper">
     <a href="index.php" class="back-link">← Back to Home</a>
-    
-    <div class="page-header">
-        <div class="page-title-section">
-            <h1>🚛 LIVE TRUCK TRACKING</h1>
-            <p>Real-time location — Truck 01 • Route 1 — Brgy. San Isidro → Poblacion</p>
+    <div class="page-header"><div class="page-title-section"><h1>LIVE TRUCK TRACKING</h1><p>Collector locations appear during their assigned active collection schedules.</p></div></div>
+    <section class="section-card" style="padding: 16px;">
+        <p id="tracking-status" class="tracking-status" data-map-status role="status" aria-live="polite">Waiting for a truck location…</p>
+        <div class="tracking-embed-map" id="tracking-map" aria-label="OpenStreetMap centered on the live collector location">
+            <iframe id="tracking-map-frame" title="OpenStreetMap centered on the live collector location" loading="eager" referrerpolicy="strict-origin-when-cross-origin" src="https://www.openstreetmap.org/export/embed?bbox=121.17233276367189%2C14.01335989114583%2C121.98944091796876%2C14.485876994143412&amp;layer=mapnik"></iframe>
+            <span id="tracking-location-dot" class="tracking-location-dot" hidden role="img" aria-label="Waste collection truck current location">
+                <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="currentColor" d="M5 12h23a3 3 0 0 1 3 3v4h6.4a4 4 0 0 1 3.2 1.6l3.6 4.8A4 4 0 0 1 45 27v9h-3.2a6 6 0 0 1-11.6 0H18.8a6 6 0 0 1-11.6 0H4a2 2 0 0 1-2-2V15a3 3 0 0 1 3-3Zm26 10v7h10v-2l-3.7-5H31ZM13 33a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm23 0a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg>
+            </span>
         </div>
-    </div>
-
-    <div class="tracking-container">
-        <div id="tracking-map"></div>
-        
-        <div class="truck-info-panel">
-            <h3><span class="live-pulse"></span> Truck 01 — On Route</h3>
-            <div class="info-row"><span>📍 Current:</span><span id="current-location">Brgy. San Isidro</span></div>
-            <div class="info-row"><span>➡ Next Stop:</span><span id="next-location">Brgy. Pag-asa</span></div>
-            <div class="info-row"><span>⏱ ETA:</span><span id="eta">~12 min</span></div>
-            <div class="info-row"><span>🚀 Speed:</span><span id="speed">28 km/h</span></div>
-            <div class="info-row"><span>📅 Last Update:</span><span id="last-update">Just now</span></div>
-        </div>
-
-        <div class="controls-panel">
-            <button id="toggleBtn">⏸ Pause</button>
-            <button id="centerBtn">🎯 Center</button>
-        </div>
-
-        <div class="route-legend">
-            <div class="legend-item"><span class="dot dot-start"></span> Start Point</div>
-            <div class="legend-item"><span class="dot dot-route"></span> Route Path</div>
-            <div class="legend-item"><span class="dot dot-end"></span> Destination</div>
-        </div>
-    </div>
-</div>
-
+        <p class="small mt-2 mb-0"><a id="tracking-map-link" href="https://www.openstreetmap.org/#map=11/14.2497/121.5809" target="_blank" rel="noopener noreferrer">View larger map</a></p>
+    </section>
+</main>
 <script>
-const routePoints = [
-    { lat: 14.1852, lng: 121.6835, name: 'Brgy. San Isidro' },
-    { lat: 14.1828, lng: 121.6860, name: 'Brgy. Pag-asa' },
-    { lat: 14.1805, lng: 121.6885, name: 'Brgy. Bagong Bayan' },
-    { lat: 14.1780, lng: 121.6910, name: 'Brgy. Poblacion' }
-];
+const mapFrame = document.getElementById('tracking-map-frame');
+const mapLink = document.getElementById('tracking-map-link');
+const locationDot = document.getElementById('tracking-location-dot');
+const status = document.getElementById('tracking-status');
 
-let map, truckMarker;
-let currentPointIndex = 0;
-let segmentProgress = 0;
-let isPaused = false;
-
-document.addEventListener('DOMContentLoaded', function() {
-    initMap();
-});
-
-function initMap() {
-    const mapContainer = document.getElementById('tracking-map');
-    if (!mapContainer) {
-        console.error('Map container not found!');
-        return;
-    }
-    
-    const startPos = [routePoints[0].lat, routePoints[0].lng];
-    map = L.map('tracking-map').setView(startPos, 15);
-    
-    // ✅ Fixed: Using OpenStreetMap — works everywhere!
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 19
-    }).addTo(map);
-
-    const truckIcon = L.divIcon({
-        html: '<div style="font-size: 28px; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));">🚛</div>',
-        className: '',
-        iconSize: [28, 28],
-        iconAnchor: [14, 14]
-    });
-
-    truckMarker = L.marker(startPos, { icon: truckIcon })
-        .addTo(map)
-        .bindPopup('<strong>🚛 Truck 01</strong><br>Route: San Isidro → Poblacion<br>Status: ● Moving');
-
-    const latlngs = routePoints.map(p => [p.lat, p.lng]);
-    L.polyline(latlngs, { color: '#3b82f6', weight: 4, opacity: 0.8 }).addTo(map);
-
-    L.circleMarker(latlngs[0], {
-        radius: 8, fillColor: '#22c55e', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2
-    }).addTo(map);
-
-    L.circleMarker(latlngs[latlngs.length - 1], {
-        radius: 8, fillColor: '#ef4444', fillOpacity: 1, strokeColor: '#ffffff', strokeWeight: 2
-    }).addTo(map);
-
-    startAnimation();
-
-    document.getElementById('toggleBtn').addEventListener('click', toggleAnimation);
-    document.getElementById('centerBtn').addEventListener('click', () => {
-        map.panTo(truckMarker.getLatLng());
-    });
+function centerEmbedMap(latitude, longitude) {
+    const halfLongitudeSpan = 0.408554077148435;
+    const halfLatitudeSpan = 0.236258551498791;
+    const bounds = [
+        longitude - halfLongitudeSpan,
+        latitude - halfLatitudeSpan,
+        longitude + halfLongitudeSpan,
+        latitude + halfLatitudeSpan
+    ].join(',');
+    const nextUrl = 'https://www.openstreetmap.org/export/embed?bbox=' + encodeURIComponent(bounds) + '&layer=mapnik';
+    if (mapFrame && mapFrame.getAttribute('src') !== nextUrl) mapFrame.src = nextUrl;
+    if (mapLink) mapLink.href = 'https://www.openstreetmap.org/#map=11/' + latitude + '/' + longitude;
 }
 
-function startAnimation() {
-    setInterval(() => {
-        if (isPaused) return;
-        segmentProgress += 0.008;
-        if (segmentProgress >= 1) {
-            segmentProgress = 0;
-            currentPointIndex++;
-            if (currentPointIndex >= routePoints.length - 1) currentPointIndex = 0;
+centerEmbedMap(14.24568806399191, 121.55897618339998);
+
+async function refreshLocation() {
+    try {
+        const response = await fetch('latest-location.php', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Location request failed');
+        const location = await response.json();
+        if (location.latitude == null || location.longitude == null) {
+            locationDot.hidden = true;
+            centerEmbedMap(14.1815, 121.6875);
+            status.textContent = location.message || 'No collector is currently sharing location during an assigned collection schedule.';
+            return;
         }
-        const from = routePoints[currentPointIndex];
-        const to = routePoints[currentPointIndex + 1];
-        const t = segmentProgress;
-        const easeT = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-        const newLat = from.lat + (to.lat - from.lat) * easeT;
-        const newLng = from.lng + (to.lng - from.lng) * easeT;
-        truckMarker.setLatLng([newLat, newLng]);
-        
-        document.getElementById('current-location').textContent = from.name;
-        document.getElementById('next-location').textContent = to.name;
-        document.getElementById('eta').textContent = '~' + Math.round((1 - segmentProgress) * 15) + ' min';
-        document.getElementById('speed').textContent = (Math.floor(Math.random() * 10) + 22) + ' km/h';
-        document.getElementById('last-update').textContent = 'Just now';
-    }, 80);
+
+        const latitude = Number(location.latitude);
+        const longitude = Number(location.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) throw new Error('Invalid coordinates');
+        centerEmbedMap(latitude, longitude);
+        locationDot.hidden = false;
+        const updatedAt = location.recorded_at ? new Date(location.recorded_at) : null;
+        status.textContent = (location.vehicle_number || 'Waste collection truck') + ' on ' + (location.route_name || 'assigned route') +
+            (updatedAt && !Number.isNaN(updatedAt.getTime()) ? ' · Updated ' + updatedAt.toLocaleString() : ' · Location received');
+    } catch (error) {
+        locationDot.hidden = true;
+        centerEmbedMap(14.1815, 121.6875);
+        status.textContent = 'Could not verify the active collection schedule. Location is hidden until it can be checked.';
+    }
 }
 
-function toggleAnimation() {
-    isPaused = !isPaused;
-    const btn = document.getElementById('toggleBtn');
-    btn.textContent = isPaused ? '▶ Resume' : '⏸ Pause';
-    btn.classList.toggle('paused', isPaused);
-}
+refreshLocation();
+window.setInterval(refreshLocation, 10000);
 </script>
-
 </body>
 </html>
