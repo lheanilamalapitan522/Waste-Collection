@@ -104,18 +104,37 @@ requirements checklist, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ### Docker
 
-1. Copy `.env.example` to `.env` in the project root and replace every `CHANGE_ME` placeholder. The file sets local MySQL and admin credentials; set `DEVELOPER_USERNAME` and `DEVELOPER_PASSWORD` to enable the optional developer login. Leave `COLLECTOR_USERNAME` and `COLLECTOR_PASSWORD` blank and register a collector through the site.
-2. Maps on the home, route, and live-tracking pages use OpenStreetMap embeds and do not require a map API key. Location markers are shown as page overlays while the embedded map recenters on the reported coordinates.
-3. Start the application:
+1. Start Docker Desktop and wait for its engine to finish starting.
+2. Create your local environment file from the template:
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+   Set unique, strong values for `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`,
+   `ADMIN_PASSWORD`, and `DEVELOPER_PASSWORD` in `.env`. The configured admin
+   and developer accounts are created when you first sign in with each account.
+   Keep `.env` private; it is excluded from Git.
+3. Validate the Compose configuration and start the application:
 
    ```sh
+   docker compose config --quiet
    docker compose up --build
    ```
+
+   In VS Code, you can also run **Terminal → Run Task → Start development
+   (Docker Compose)**. This task starts the services in the background.
+
+Maps use OpenStreetMap embeds and do not require a map API key. Location
+markers are shown as page overlays while the embedded map recenters on reported
+coordinates.
 
 The app container mounts the project folder read-only and watches PHP, CSS,
 and JavaScript files during development. Save a change and the open page at
 `http://localhost:8080` reloads automatically. Rebuild only when changing the
-Dockerfile or Apache configuration.
+Dockerfile or Apache configuration. Stop the foreground Compose command with
+Ctrl+C, or run `docker compose down` to stop services started in the background.
+Both methods keep the database volume.
 
 4. Open `http://localhost:8080`. The Docker port is bound to localhost only.
 5. Open `http://localhost:8081` to open phpMyAdmin.
@@ -173,20 +192,24 @@ PHP/Apache application; it does not run `docker-compose.yml` or a local MySQL
 container.
 
 1. Create a MySQL database with an external provider that allows connections
-   from Vercel.
+   from Vercel. Follow the Aiven connection steps in
+   [CONTRIBUTING.md](./CONTRIBUTING.md#10-connect-vercel-to-an-external-mysql-database)
+   or the provider's instructions for obtaining its TLS CA certificate.
 2. For a new database, import [schema.sql](./schema.sql). For an existing
    database, back it up and apply only the missing migrations as described in
-   the [database setup guide](./CONTRIBUTING.md#5-database-schema-and-migrations).
+   the [database setup guide](./CONTRIBUTING.md#6-database-schema-and-migrations).
 3. Import this repository into Vercel and select **Container** as the framework
    preset. The root `Dockerfile` is used automatically.
 4. Add these Vercel environment variables for the deployment:
 
    ```text
    DB_HOST=your-copied-aiven-host
-   DB_PORT=27689
+   DB_PORT=your-copied-aiven-port
    DB_NAME=defaultdb
    DB_USER=avnadmin
    DB_PASS=your-aiven-password
+   DB_SSL_CA_PEM=<paste the complete Aiven CA PEM certificate>
+   APP_ENV=production
    ADMIN_USERNAME=your-admin-username
    ADMIN_PASSWORD=your-strong-admin-password
    DEVELOPER_USERNAME=your-developer-username
@@ -199,8 +222,9 @@ container.
    Use Vercel's encrypted environment-variable settings instead of committing
    these values to the repository. `MYSQL_*` variables in `.env` and
    `docker-compose.yml` configure local Docker only; the deployed application
-   reads the `DB_*` variables above. Copy the host and port from Aiven's
-   connection information; use Aiven's shown port if it differs from `27689`.
+   reads the `DB_*` variables above. Copy the host, port, database name, and
+   username from Aiven's connection information. The CA certificate is used to
+   verify MySQL TLS.
 5. Deploy and open the generated Vercel URL. Use the Vercel URL over HTTPS so
    secure session cookies and browser geolocation work correctly.
 

@@ -7,15 +7,15 @@ services:
     environment:
       APP_ENV: ${APP_ENV:-development}
       DB_HOST: db
-      DB_NAME: ${MYSQL_DATABASE:-mauban_waste_collection}
-      DB_USER: ${MYSQL_USER:-mauban}
-      DB_PASS: ${MYSQL_PASSWORD:-mauban_password}
-      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
-      COLLECTOR_USERNAME: ${COLLECTOR_USERNAME:-collector}
+      DB_NAME: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
+      DB_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
+      DB_PASS: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?Set ADMIN_USERNAME in .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      COLLECTOR_USERNAME: ${COLLECTOR_USERNAME:-}
       COLLECTOR_PASSWORD: ${COLLECTOR_PASSWORD:-}
-      DEVELOPER_USERNAME: ${DEVELOPER_USERNAME:-}
-      DEVELOPER_PASSWORD: ${DEVELOPER_PASSWORD:-}
+      DEVELOPER_USERNAME: ${DEVELOPER_USERNAME:?Set DEVELOPER_USERNAME in .env}
+      DEVELOPER_PASSWORD: ${DEVELOPER_PASSWORD:?Set DEVELOPER_PASSWORD in .env}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-0}
     volumes:
       - ./:/var/www/html:ro
@@ -26,10 +26,10 @@ services:
   db:
     image: mysql:8.0
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-mauban_waste_collection}
-      MYSQL_USER: ${MYSQL_USER:-mauban}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mauban_password}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?Set MYSQL_DATABASE in .env}
+      MYSQL_USER: ${MYSQL_USER:?Set MYSQL_USER in .env}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?Set MYSQL_PASSWORD in .env}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in .env}
     volumes:
       - mysql_data:/var/lib/mysql
       - ./schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
