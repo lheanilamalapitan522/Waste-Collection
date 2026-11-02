@@ -1,6 +1,6 @@
 <?php
 require_once 'auth.php';
-require 'config.php';
+require_once 'config.php';
 require_role('admin');
 
 $managementSection = $managementSection ?? (string) ($_GET['section'] ?? 'routes');

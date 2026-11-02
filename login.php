@@ -1,6 +1,6 @@
 <?php
 require_once 'auth.php';
-require 'config.php';
+require_once 'config.php';
 
 $registrationNotice = $_SESSION['registration_notice'] ?? null;
 unset($_SESSION['registration_notice']);

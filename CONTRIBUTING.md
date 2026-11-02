@@ -173,6 +173,7 @@ migrations, once each, in numeric order:
 | `002_assign_collectors_to_routes.sql` | Both `drivers.user_id` and `drivers.route_id` are missing because this migration has not yet been applied. |
 | `003_enable_daily_route_schedule.sql` | You want its optional daily Route 1 test schedule. |
 | `004_add_privacy_consent_metadata.sql` | Both `users.privacy_consented_at` and `users.privacy_policy_version` are missing because this migration has not yet been applied. |
+| `005_add_mysql_sessions.sql` | The `app_sessions` table is missing and the application will use MySQL-backed sessions. |
 
 These SQL migrations are not all safe to rerun. Do not run them just because
 they are present in the repository. Never apply development migrations to a
@@ -294,10 +295,17 @@ hosted database reachable over the network. These steps use Aiven for MySQL.
 5. Initialize a new database with [schema.sql](schema.sql). For an existing
    database, make a backup and follow the migration checks in
    [Section 6](#6-database-schema-and-migrations). Do not reinitialize or
-   overwrite a database that contains data. From Git Bash opened at the project
-   folder, you can apply the schema using the MySQL CLI with TLS verification
-   enabled. Replace the example connection values and save Aiven's downloaded
-   CA certificate locally:
+   overwrite a database that contains data. For an existing database, apply
+   [migrations/005_add_mysql_sessions.sql](migrations/005_add_mysql_sessions.sql)
+   once after taking a backup; Vercel needs this table to persist logins across
+   container instances. You can apply the schema or migration in MySQL
+   Workbench: connect to Aiven using its hostname and port, select **Use SSL**
+   with the downloaded CA certificate, select the target database in
+   **SCHEMAS**, then open the SQL file and execute it.
+   Alternatively, from Git Bash opened at the project folder, apply a new
+   database schema using the MySQL CLI with TLS verification enabled. Replace
+   the example connection values and save Aiven's downloaded CA certificate
+   locally:
 
    ```sh
    mysql --ssl-mode=VERIFY_IDENTITY --ssl-ca="C:/path/to/aiven-ca.pem" \
@@ -320,6 +328,7 @@ hosted database reachable over the network. These steps use Aiven for MySQL.
    DB_PASS=<aiven password>
    DB_SSL_CA_PEM=<paste the complete Aiven CA PEM certificate>
    APP_ENV=production
+   SESSION_STORE=mysql
    ADMIN_USERNAME=<production admin username>
    ADMIN_PASSWORD=<unique strong production password>
    DEVELOPER_USERNAME=<production developer username>
@@ -344,7 +353,8 @@ in `.env` and `docker-compose.yml` are only for the local Compose database.
 The deployment uses an external database; its filesystem is ephemeral, so
 database records must be stored in MySQL, not in application files. The
 `DB_SSL_CA_PEM` setting is also available for other MySQL providers that supply
-a PEM CA certificate.
+a PEM CA certificate. MySQL-backed sessions expire after 30 days of
+inactivity.
 
 ## 11. Pull requests
 

@@ -1,6 +1,6 @@
 <?php
 require_once 'auth.php';
-require 'config.php';
+require_once 'config.php';
 
 $route = $pdo->query("SELECT id, name, barangay, status FROM routes WHERE status = 'active' ORDER BY id LIMIT 1")->fetch();
 $routePoints = [];

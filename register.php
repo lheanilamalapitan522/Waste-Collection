@@ -1,6 +1,6 @@
 <?php
 require_once 'auth.php';
-require 'config.php';
+require_once 'config.php';
 
 $error = null;
 $csrfToken = $_SESSION['csrf_token'] ?? null;

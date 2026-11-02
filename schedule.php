@@ -1,6 +1,6 @@
 <?php
 require_once 'session.php';
-require 'config.php';
+require_once 'config.php';
 $scheduleRows = $pdo->query(
     "SELECT r.id AS route_id, r.name AS route_name, r.barangay, s.day_name, s.collection_time
      FROM schedule s JOIN routes r ON r.id = s.route_id

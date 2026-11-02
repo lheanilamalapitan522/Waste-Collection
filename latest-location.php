@@ -1,5 +1,5 @@
 <?php
-require 'config.php';
+require_once 'config.php';
 require_once 'tracking.php';
 header('Content-Type: application/json');
 header('Cache-Control: no-store, max-age=0');

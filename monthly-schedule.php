@@ -1,6 +1,6 @@
 <?php
 require_once 'session.php';
-require 'config.php';
+require_once 'config.php';
 $now = new DateTimeImmutable('now', new DateTimeZone('Asia/Manila'));
 $monthStart = $now->modify('first day of this month')->setTime(0, 0);
 $daysInMonth = (int) $monthStart->format('t');

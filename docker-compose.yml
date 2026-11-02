@@ -17,6 +17,7 @@ services:
       DEVELOPER_USERNAME: ${DEVELOPER_USERNAME:?Set DEVELOPER_USERNAME in .env}
       DEVELOPER_PASSWORD: ${DEVELOPER_PASSWORD:?Set DEVELOPER_PASSWORD in .env}
       SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-0}
+      SESSION_STORE: ${SESSION_STORE:-files}
     volumes:
       - ./:/var/www/html:ro
     depends_on:

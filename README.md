@@ -184,53 +184,169 @@ plain HTTP.
 
 The environment credentials bootstrap configured administrator and developer accounts. Drivers can register from the Login page, and administrators can create administrator or driver accounts from Manage Accounts. Residents use the public pages without signing in.
 
-### Vercel test deployment
+### Vercel deployment
 
-This project can be deployed to Vercel with the Container runtime because the
-repository includes a root `Dockerfile`. The Vercel deployment runs only the
-PHP/Apache application; it does not run `docker-compose.yml` or a local MySQL
-container.
+Follow these steps in order. The Vercel deployment runs the PHP/Apache
+application from the root [Dockerfile](./Dockerfile); it does not run
+`docker-compose.yml` or a MySQL server. Aiven stores the application data and
+PHP sessions. Do not put database passwords or other secrets in this README,
+GitHub, or screenshots.
 
-1. Create a MySQL database with an external provider that allows connections
-   from Vercel. Follow the Aiven connection steps in
-   [CONTRIBUTING.md](./CONTRIBUTING.md#10-connect-vercel-to-an-external-mysql-database)
-   or the provider's instructions for obtaining its TLS CA certificate.
-2. For a new database, import [schema.sql](./schema.sql). For an existing
-   database, back it up and apply only the missing migrations as described in
-   the [database setup guide](./CONTRIBUTING.md#6-database-schema-and-migrations).
-3. Import this repository into Vercel and select **Container** as the framework
-   preset. The root `Dockerfile` is used automatically.
-4. Add these Vercel environment variables for the deployment:
+#### 1. Prepare Aiven MySQL
 
-   ```text
-   DB_HOST=your-copied-aiven-host
-   DB_PORT=your-copied-aiven-port
-   DB_NAME=defaultdb
-   DB_USER=avnadmin
-   DB_PASS=your-aiven-password
-   DB_SSL_CA_PEM=<paste the complete Aiven CA PEM certificate>
-   APP_ENV=production
-   ADMIN_USERNAME=your-admin-username
-   ADMIN_PASSWORD=your-strong-admin-password
-   DEVELOPER_USERNAME=your-developer-username
-   DEVELOPER_PASSWORD=your-strong-developer-password
-   COLLECTOR_USERNAME=
-   COLLECTOR_PASSWORD=
-   SESSION_COOKIE_SECURE=1
-   ```
+1. In the [Aiven Console](https://console.aiven.io/), create or select a MySQL
+   service and wait until its status is **Running**.
+2. Open the service's connection information. Copy the hostname, port, database
+   name, username, and password into a private password manager or temporary
+   private note. Use the values Aiven shows; the port and database name may not
+   be the examples in this guide.
+3. Download the Aiven CA certificate. Keep the complete PEM text, including
+   the `BEGIN CERTIFICATE` and `END CERTIFICATE` lines. Do not disable TLS
+   verification.
+4. Configure Aiven's network access for the Vercel app. Allow only the outbound
+   IP address or range supported by your Vercel plan. If you cannot determine
+   or restrict the Vercel egress address, check your hosting/network options
+   before continuing; do not make the database publicly accessible to all IPs.
 
-   Use Vercel's encrypted environment-variable settings instead of committing
-   these values to the repository. `MYSQL_*` variables in `.env` and
-   `docker-compose.yml` configure local Docker only; the deployed application
-   reads the `DB_*` variables above. Copy the host, port, database name, and
-   username from Aiven's connection information. The CA certificate is used to
-   verify MySQL TLS.
-5. Deploy and open the generated Vercel URL. Use the Vercel URL over HTTPS so
-   secure session cookies and browser geolocation work correctly.
+**Check before continuing:** The Aiven service is **Running**, you have the
+connection details and CA certificate saved privately, and the database can
+accept connections from the Vercel deployment's restricted network.
 
-Vercel deployments use an ephemeral, read-only application filesystem and do
-not persist uploaded files or a local database. Application data must remain
-in the external MySQL database.
+#### 2. Connect MySQL Workbench and prepare the schema
+
+1. In MySQL Workbench, create a connection using Aiven's hostname, port,
+   username, and password. In the connection's **SSL** settings, enable SSL
+   and select the downloaded Aiven CA certificate. Select **Test Connection**.
+2. If this is a **new, empty database**, open [schema.sql](./schema.sql) in
+   Workbench, select the target database/schema in the **SCHEMAS** panel, and
+   execute the script once. It creates the application tables and sample route
+   and vehicle records.
+3. If this is an **existing database**, do not execute `schema.sql` over it.
+   Back up the database first, inspect the existing tables, and apply only the
+   migrations it still needs. For Vercel's persistent logins, execute
+   [migration 005](./migrations/005_add_mysql_sessions.sql) once if the
+   `app_sessions` table is missing. See the
+   [migration checklist](./CONTRIBUTING.md#6-database-schema-and-migrations)
+   before applying any other migration.
+4. In Workbench, refresh **SCHEMAS** and confirm the database contains at least
+   `users`, `routes`, `vehicles`, `drivers`, `schedule`, `gps_locations`, and
+   `app_sessions`.
+
+**Check before continuing:** Workbench's connection test succeeds and all
+required tables are visible. Do not continue if Workbench reports an SSL,
+permission, or database-selection error.
+
+#### 3. Import the project into Vercel
+
+1. Push the latest project changes to the GitHub branch you want to deploy.
+   Ensure the Vercel deployment will include the MySQL session handler and
+   [migration 005](./migrations/005_add_mysql_sessions.sql).
+2. In Vercel, select **Add New → Project**, import this GitHub repository, and
+   choose the correct repository and production branch.
+3. Select the **Container** framework preset. Keep the project root as the
+   **Root Directory** so Vercel can find the repository's root `Dockerfile`.
+   Vercel runs the application container only; it does not start the local
+   database from Docker Compose.
+
+**Check before continuing:** The Vercel project is linked to the intended
+repository and branch, and its settings show the Container preset and the
+repository root as the root directory.
+
+#### 4. Add Vercel environment variables
+
+In Vercel, open **Project → Settings → Environment Variables**. Add each
+variable below separately to **Production**. Copy Aiven's actual connection
+values; do not use the example text as credentials.
+
+| Variable | Value |
+| --- | --- |
+| `DB_HOST` | Aiven hostname |
+| `DB_PORT` | Aiven port |
+| `DB_NAME` | Aiven database name |
+| `DB_USER` | Aiven username |
+| `DB_PASS` | Aiven password |
+| `DB_SSL_CA_PEM` | Complete Aiven CA PEM certificate, including both certificate lines |
+| `APP_ENV` | `production` |
+| `SESSION_STORE` | `mysql` |
+| `SESSION_COOKIE_SECURE` | `1` |
+| `ADMIN_USERNAME` | A unique production admin username |
+| `ADMIN_PASSWORD` | A strong, unique production admin password |
+| `DEVELOPER_USERNAME` | A unique production developer username |
+| `DEVELOPER_PASSWORD` | A strong, unique production developer password |
+| `COLLECTOR_USERNAME` | Leave blank unless you intentionally use a bootstrap collector |
+| `COLLECTOR_PASSWORD` | Leave blank unless you intentionally use a bootstrap collector |
+
+`DB_SSL_CA_PEM` is a certificate, not a password; paste the full PEM without
+adding quotes. Keep passwords in Vercel's encrypted environment-variable
+settings. `MYSQL_*` values in `.env` and `docker-compose.yml` are for local
+Docker only; the deployed app reads the `DB_*` values above. Do not add
+production database credentials to **Preview** deployments unless you have
+intentionally chosen to let preview builds use that database.
+
+**Check before continuing:** Each variable is saved under the correct name and
+Production environment. Reveal/check values privately in Vercel; do not paste
+them into chat, GitHub, or logs. Redeploy after changing variables so the new
+deployment receives them.
+
+#### 5. Deploy and check the first response
+
+1. Select **Deploy** in Vercel. Wait for the build and deployment to finish.
+2. If the build fails, open the Vercel deployment's **Build Logs** and fix the
+   reported error before retrying.
+3. Open the deployment URL over **HTTPS**. Check that the home page loads, then
+   open the schedule, routes, and live-tracking pages.
+4. If a page shows the generic service-unavailable message, check the
+   deployment's **Runtime Logs**. Confirm the Aiven hostname, port, database,
+   username, password, SSL CA, and network allowlist. Production fails closed
+   when the CA certificate is missing or invalid.
+
+**Check before continuing:** The deployment reports **Ready**, the home page
+loads over HTTPS, and database-backed public pages display without a
+service-unavailable error.
+
+#### 6. Check admin login and persistent sessions
+
+1. Open the login page and sign in with the production admin username and
+   password configured in Vercel. On the first successful login, the app
+   creates the configured account in the `users` table. Existing database
+   accounts take precedence over bootstrap credentials.
+2. Open an admin-only page, then navigate to another protected page. Refresh
+   the page and confirm you remain signed in.
+3. In Workbench, refresh the `app_sessions` table and confirm a session row
+   exists. Do not share or publish session data.
+4. Sign out and confirm a protected page sends you back to login.
+
+**Check before continuing:** Admin login succeeds, protected pages retain the
+login between requests, the database has a session row, and logout ends the
+session. If login fails, check Vercel **Runtime Logs**, the configured
+credentials, and whether that username already has an account in `users`.
+
+#### 7. Prepare real service data and test tracking
+
+The new-database schema includes sample route and vehicle records. Before
+announcing the site, sign in as the admin and review **Manage routes**,
+**Manage schedules**, and **Manage trucks**. Replace sample information with
+approved service data, assign a collector account and vehicle to an active
+route, and ensure the route has an active schedule for the current Philippines
+time.
+
+Then test from a phone over the HTTPS deployment:
+
+- Register or configure a collector account and assign it to the correct
+  vehicle and route.
+- Sign in as that collector, allow location access, and start sharing while
+  the route's schedule is active.
+- Open **Live Tracking** and check that the latest location appears.
+- Stop sharing and confirm the collector page reports that tracking stopped.
+
+**Final check:** Public information is correct, admin and collector logins
+work, the site is HTTPS, and tracking only appears for a currently active,
+assigned collector. Browser location sharing requires HTTPS and permission.
+
+Vercel's application filesystem is ephemeral. Do not rely on local files or
+PHP's default file sessions for persistent data; this deployment uses Aiven
+MySQL for both application data and sessions. MySQL-backed sessions expire
+after 30 days of inactivity.
 
 ### Privacy and security
 
