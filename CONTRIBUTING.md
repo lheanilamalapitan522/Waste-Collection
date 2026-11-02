@@ -26,38 +26,69 @@ do not need a Google Maps API key.
 
 Docker is the documented and recommended local development environment.
 
-## 2. Get the source
+## 2. Connect GitHub Desktop
 
-Fork the repository on GitHub, then clone your fork:
+1. Install [GitHub Desktop](https://desktop.github.com/) and sign in to
+   GitHub.com from **File → Options → Accounts** (Windows). Approve the browser
+   authorization request; never paste a password or access token into the
+   project.
+2. Make sure you can access the repository on GitHub. A maintainer can invite
+   you under **Settings → Collaborators** and grant **Write** access. Accept
+   the invitation before cloning. If you do not have write access, fork the
+   repository on GitHub and work in your fork instead.
+3. In GitHub Desktop, choose **File → Clone repository**, select
+   `lheanilamalapitan522/Waste-Collection` (or paste the repository URL), set
+   the local path, and select **Clone**. Open the cloned folder in VS Code.
+4. In the **Current branch** menu, select `main`, choose **New branch**, and
+   create a descriptive branch such as `feature/update-schedules`. Do not
+   develop directly on `main`.
+5. After making and checking changes, enter a commit summary and select
+   **Commit to feature/...**. Select **Publish branch** or **Push origin** to
+   upload the branch.
+6. Select **Create Pull Request** in GitHub Desktop. Check that the base is
+   `main` and the compare branch is your feature branch, then create the pull
+   request on GitHub. Reviewers can discuss changes and merge the pull request
+   there.
+
+Direct pushes to `main` may be blocked by repository branch protections. Write
+access allows a contributor to push branches and merge pull requests when
+repository rules permit it; it does not grant administrator access.
+
+## 3. Get the source with Git
+
+If you prefer the command line, fork the repository on GitHub, then clone your
+fork:
 
 ```sh
 git clone https://github.com/<your-github-name>/Waste-Collection.git
 cd Waste-Collection
 ```
 
-To contribute to the original project, add it as the `upstream` remote and get
-the latest branch information:
+For a fork, add the original repository as `upstream` and fetch its branches:
 
 ```sh
 git remote add upstream https://github.com/lheanilamalapitan522/Waste-Collection.git
 git fetch upstream
+git switch -c feature/short-description upstream/main
 ```
 
-Create a feature branch from the project's default branch before editing:
+If you have Write access and cloned the original repository instead, update
+`origin` and create the feature branch from its `main` branch:
 
 ```sh
-git switch -c feature/short-description upstream/main
+git fetch origin
+git switch -c feature/short-description origin/main
 ```
 
 If `upstream` already exists, do not add it again. Use `git remote -v` to check
 which repositories `origin` and `upstream` point to.
 
-## 3. Configure a local `.env`
+## 4. Configure a local `.env`
 
-Copy `.env.example` to `.env` in the project root, then replace every
-`CHANGE_ME` value with a unique local password. The example admin and developer
-passwords meet the application's minimum rule of eight characters with an
-uppercase letter, lowercase letter, and number; replace them before use.
+Copy `.env.example` to `.env` in the project root, then set unique, strong
+values for `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, `ADMIN_PASSWORD`, and
+`DEVELOPER_PASSWORD`. The template intentionally leaves passwords blank so
+credentials are not shared between contributors.
 
 Do not reuse production, Aiven, Vercel, or personal account credentials. `.env`
 is ignored by Git; never force-add it or paste its contents into a commit,
@@ -69,21 +100,42 @@ only; deployments behind HTTPS must use `SESSION_COOKIE_SECURE=1`. Leave the
 optional collector bootstrap values blank and register a collector through the
 site so its driver record is created correctly.
 
-## 4. Start the application
+## 5. Connect Docker Desktop and start the application
 
-From the project folder, run:
+1. Install and start Docker Desktop. Wait for the Docker engine to report that
+   it is running; keeping the Docker Desktop window open is not required once
+   the engine is ready.
+2. Open the cloned project folder in VS Code. In the integrated terminal,
+   confirm it is at the repository root and create the private environment
+   file, replacing the blank password values with unique local passwords:
 
-```sh
-docker compose up --build
-```
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
-Wait until the app, database, and phpMyAdmin containers are running, then open:
+3. Check that Docker Compose can read the configuration, then start the services:
 
-- Application: <http://localhost:8080>
-- phpMyAdmin: <http://localhost:8081>
+   ```sh
+   docker compose config --quiet
+   docker compose up --build
+   ```
 
-The ports are bound to localhost. In phpMyAdmin, select server `db` and use
-`MYSQL_USER` and `MYSQL_PASSWORD` from `.env`.
+Alternatively, in VS Code select **Terminal → Run Task** and run
+**Start development (Docker Compose)**. This builds and starts the services in
+the background. Run **Stop development (Docker Compose)** or `docker compose
+down` to stop them. Both options preserve the database volume.
+
+4. Wait until **Docker Desktop → Containers** or `docker compose ps` shows the
+   database as healthy and the app and phpMyAdmin as running. Then open:
+
+   - Application: <http://localhost:8080>
+   - phpMyAdmin: <http://localhost:8081>
+
+The ports are bound to this computer. The app connects to MySQL using the
+Compose-only hostname `db` on port `3306`; do not change it to `localhost`
+inside the app container. To connect phpMyAdmin, select server `db`, then sign
+in with `MYSQL_USER` and `MYSQL_PASSWORD` from `.env`. phpMyAdmin is available
+at `http://localhost:8081`; the website is at `http://localhost:8080`.
 
 On its first initialization, the MySQL volume imports `schema.sql`. The
 environment-configured admin and developer accounts are created in the users
@@ -95,7 +147,7 @@ Stop the containers with `docker compose down`; this keeps the database volume.
 Do not use `docker compose down -v` unless you intend to delete the local
 database and all its data.
 
-## 5. Database schema and migrations
+## 6. Database schema and migrations
 
 ### New local database
 
@@ -128,7 +180,7 @@ production database without the project owner's review and a verified backup.
 If a database has only some columns from a migration, do not run that migration
 file as-is; review it and apply only the missing schema changes with a backup.
 
-## 6. Create accounts and prepare tracking data
+## 7. Create accounts and prepare tracking data
 
 1. Sign in with the local `ADMIN_USERNAME` and `ADMIN_PASSWORD` from `.env`.
    On a new database, the configured account is created on its first successful
@@ -153,7 +205,7 @@ file as-is; review it and apply only the missing schema changes with a backup.
 Residents do not need accounts. They can view public schedules, routes, and the
 tracking page without signing in.
 
-## 7. Manual requirement checklist
+## 8. Manual requirement checklist
 
 There is no automated test suite or package-manager test command in this
 repository. Before submitting a change, manually check the areas it affects.
@@ -195,7 +247,7 @@ repository. Before submitting a change, manually check the areas it affects.
 For real-phone checks, use a consenting test account and stop sharing when the
 test is complete.
 
-## 8. Troubleshooting
+## 9. Troubleshooting
 
 - **Database unavailable:** Check `docker compose ps` and `docker compose logs
   app db`. Confirm `.env` values are consistent and the database is healthy.
@@ -214,7 +266,87 @@ test is complete.
 - **Port already in use:** Stop the process using port 8080 or 8081, or adjust
   the host port in `docker-compose.yml`.
 
-## 9. Pull requests
+## 10. Connect Vercel to an external MySQL database
+
+Local Docker uses a MySQL container; a deployed Vercel app needs a separately
+hosted database reachable over the network. These steps use Aiven for MySQL.
+
+1. In the [Aiven Console](https://console.aiven.io/), create or select a project,
+   choose **Create service → MySQL**, select an available plan and region, and
+   create the service. Wait until its status is **Running**. See Aiven's
+   [MySQL getting-started guide](https://aiven.io/docs/products/mysql/get-started)
+   for current console navigation.
+2. Open the service's **Overview** or **Quick connect** panel and record the
+   hostname, port, database name, username, and generated password. Use the
+   service's displayed values; do not assume the default port is `3306`. Keep
+   all connection details private.
+3. Download the service CA certificate from its connection details. Keep the
+   complete PEM certificate, including the `BEGIN CERTIFICATE` and `END
+   CERTIFICATE` lines. Aiven documents the connection details in its
+   [MySQL connection guide](https://aiven.io/docs/products/mysql/howto/connect-from-cli).
+   The application uses this CA to verify the database server's TLS certificate;
+   do not turn off certificate verification.
+4. Configure Aiven's allowed IP addresses/network access for the app's outbound
+   connection. Prefer a fixed egress IP and allow only that address or range.
+   If the deployment does not provide a fixed egress address, do not expose
+   the database to all IP addresses by default; choose a hosting/network setup
+   with a supported restricted connection.
+5. Initialize a new database with [schema.sql](schema.sql). For an existing
+   database, make a backup and follow the migration checks in
+   [Section 6](#6-database-schema-and-migrations). Do not reinitialize or
+   overwrite a database that contains data. From Git Bash opened at the project
+   folder, you can apply the schema using the MySQL CLI with TLS verification
+   enabled. Replace the example connection values and save Aiven's downloaded
+   CA certificate locally:
+
+   ```sh
+   mysql --ssl-mode=VERIFY_IDENTITY --ssl-ca="C:/path/to/aiven-ca.pem" \
+     --host="your-aiven-host" --port=your-aiven-port \
+     --user=avnadmin --password defaultdb < schema.sql
+   ```
+
+   The client prompts for the password. Do not put it directly in the command
+   or terminal history.
+6. In Vercel, import the GitHub repository and select the Container preset so
+   Vercel builds the root `Dockerfile`. Under **Project → Settings →
+   Environment Variables**, add these values to the **Production** environment
+   (and **Preview** only if preview deployments should use this database):
+
+   ```text
+   DB_HOST=<aiven hostname>
+   DB_PORT=<aiven port>
+   DB_NAME=<aiven database name>
+   DB_USER=<aiven username>
+   DB_PASS=<aiven password>
+   DB_SSL_CA_PEM=<paste the complete Aiven CA PEM certificate>
+   APP_ENV=production
+   ADMIN_USERNAME=<production admin username>
+   ADMIN_PASSWORD=<unique strong production password>
+   DEVELOPER_USERNAME=<production developer username>
+   DEVELOPER_PASSWORD=<unique strong production password>
+   COLLECTOR_USERNAME=
+   COLLECTOR_PASSWORD=
+   SESSION_COOKIE_SECURE=1
+   ```
+
+   Store these values in Vercel's encrypted environment-variable settings, not
+   in Git, the repository `.env`, or deployment logs. Paste the CA certificate
+   as a multiline PEM value; it is a public certificate, not a password.
+7. Save the variables and redeploy so the app receives them. Open the deployed
+   HTTPS URL and verify the homepage and database-backed pages. If the app
+   returns a database-unavailable response, verify the host,
+   port, database, credentials, provider network allowlist, and the provider's
+   CA certificate. Production connections without a valid `DB_SSL_CA_PEM` fail
+   closed rather than silently connecting without TLS verification.
+
+Vercel environment variables use the app's `DB_*` names. `MYSQL_*` settings
+in `.env` and `docker-compose.yml` are only for the local Compose database.
+The deployment uses an external database; its filesystem is ephemeral, so
+database records must be stored in MySQL, not in application files. The
+`DB_SSL_CA_PEM` setting is also available for other MySQL providers that supply
+a PEM CA certificate.
+
+## 11. Pull requests
 
 - Work on a named feature branch; do not commit directly to `main`.
 - Keep each pull request focused and explain the changed behavior and manual
